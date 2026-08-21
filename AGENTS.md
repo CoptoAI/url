@@ -3,6 +3,7 @@
 ## Non-obvious constraints
 
 - Write all documentation and code comments in English.
+- Do not commit or write code directly to the `master` branch. Always work on new branches and merge them so that the repository can be cleanly kept up-to-date with upstream changes without missing edits.
 - Use Node.js 22 and pnpm 11.11.0 (`package.json` is authoritative). The root package is the Nuxt app; `docs/` is the `@sink/docs` VitePress workspace package.
 - Do not hand-edit `app/components/ui/**`; it is managed by shadcn-vue and excluded from ESLint.
 - Read `DESIGN.md` before UI work. The authoritative design sources are `app/assets/css/tailwind.css` and `app/components/ui/**`; `DESIGN.md` is a derived summary.

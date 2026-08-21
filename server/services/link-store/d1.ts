@@ -56,8 +56,17 @@ function withoutQuery(url: string): string {
   return stringifyParsedURL({ ...parsed, search: '' })
 }
 
-function getDatabase(event: H3Event) {
+export function getD1Database(event: H3Event) {
   return drizzle(event.context.cloudflare.env.DB)
+}
+
+function getDatabase(event: H3Event) {
+  return getD1Database(event)
+}
+
+function orgCondition(event: H3Event) {
+  const orgId = event.context.organizationId
+  return orgId ? eq(links.organizationId, orgId) : undefined
 }
 
 function activeCondition(now = Math.floor(Date.now() / 1000)) {
@@ -137,6 +146,9 @@ export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt
   return {
     slug: link.slug,
     id: link.id,
+    organizationId: event.context.organizationId || null,
+    createdBy: event.context.userID && event.context.userID !== 'root' ? event.context.userID : null,
+    customDomainId: event.context.customDomainId || null,
     url: link.url,
     comment: link.comment ?? null,
     createdAt: link.createdAt,
@@ -351,7 +363,7 @@ export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Pr
   }
 
   const tagCondition = exactTagCondition(db, options.tag)
-  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, cursorCondition)).orderBy(...order).limit(options.limit + 1)
+  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, cursorCondition, orgCondition(event))).orderBy(...order).limit(options.limit + 1)
   const hasMore = rows.length > options.limit
   const page = hasMore ? rows.slice(0, options.limit) : rows
   const last = page.at(-1)
@@ -392,9 +404,9 @@ export async function* d1IterateAllLinks(env: Cloudflare.Env): AsyncIterable<Lin
   } while (lastSlug)
 }
 
-function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
+function linkFilterCondition(event: H3Event, db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
   const status = options.status ?? 'active'
-  const conditions = [statusCondition(status)]
+  const conditions = [statusCondition(status), orgCondition(event)]
   if (options.tag)
     conditions.push(exactTagCondition(db, options.tag))
   if (options.url)
@@ -414,7 +426,7 @@ function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFi
 
 export async function d1SearchLinks(event: H3Event, options: SearchLinksOptions): Promise<LinkSearchItem[]> {
   const db = getDatabase(event)
-  let query = db.select({ slug: links.slug, url: links.normalizedUrl, comment: links.comment }).from(links).where(linkFilterCondition(db, options)).orderBy(asc(links.slug)).$dynamic()
+  let query = db.select({ slug: links.slug, url: links.normalizedUrl, comment: links.comment }).from(links).where(linkFilterCondition(event, db, options)).orderBy(asc(links.slug)).$dynamic()
   if (options.limit)
     query = query.limit(options.limit)
   const rows = await query
@@ -424,7 +436,7 @@ export async function d1SearchLinks(event: H3Event, options: SearchLinksOptions)
 
 export async function d1CountLinks(event: H3Event, options: LinkFilterOptions): Promise<number> {
   const db = getDatabase(event)
-  const [result] = await db.select({ count: count() }).from(links).where(linkFilterCondition(db, options))
+  const [result] = await db.select({ count: count() }).from(links).where(linkFilterCondition(event, db, options))
   return result?.count ?? 0
 }
 

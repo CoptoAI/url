@@ -15,17 +15,20 @@ defineRouteMeta({
 export default eventHandler((event) => {
   const authMethod: unknown = event.context.authMethod
   const userID: unknown = event.context.userID
-  const userEmail: unknown = event.context.userEmail
+  const userEmail: unknown = event.context.userEmail || (authMethod === 'api-key' ? `api-key@${event.context.organizationId}` : undefined)
+  const userName: unknown = event.context.userName
+  const organizationId: unknown = event.context.organizationId
+
   if (
     (
       authMethod !== 'site-token'
       && authMethod !== 'access-user'
       && authMethod !== 'access-service'
+      && authMethod !== 'session-jwt'
+      && authMethod !== 'api-key'
     )
     || typeof userID !== 'string'
     || !userID
-    || typeof userEmail !== 'string'
-    || !userEmail
   ) {
     throw createError({
       status: 401,
@@ -40,7 +43,9 @@ export default eventHandler((event) => {
     url: 'https://sink.cool',
     authMethod,
     userID,
-    userEmail,
+    userEmail: typeof userEmail === 'string' ? userEmail : undefined,
+    userName: typeof userName === 'string' ? userName : undefined,
+    organizationId: typeof organizationId === 'string' ? organizationId : undefined,
     accessEnabled: isCloudflareAccessConfigured(cfAccessTeamDomain, cfAccessAud),
   }
 })

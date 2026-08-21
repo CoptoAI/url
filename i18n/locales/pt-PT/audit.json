@@ -1,0 +1,20 @@
+{
+  "audit": {
+    "title": "Audit Logs",
+    "description": "View all security and administrative activity across your workspace.",
+    "table": {
+      "timestamp": "Timestamp",
+      "actor": "Actor",
+      "action": "Action",
+      "resource": "Resource",
+      "ip": "IP Address",
+      "details": "Details"
+    },
+    "filter": {
+      "all_actions": "All Actions",
+      "all_resources": "All Resources"
+    },
+    "empty": "No audit logs found for this workspace.",
+    "inspector_title": "Audit Event Details"
+  }
+}

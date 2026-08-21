@@ -18,8 +18,25 @@ const optionalName = z.preprocess(
   z.string().trim().min(1).optional(),
 )
 
+const d1DatabaseId = z.preprocess(
+  (value) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      // If it's a 32-character hex string without hyphens, format it as a standard UUID
+      if (/^[0-9a-f]{32}$/i.test(trimmed)) {
+        const formatted = `${trimmed.slice(0, 8)}-${trimmed.slice(8, 12)}-${trimmed.slice(12, 16)}-${trimmed.slice(16, 20)}-${trimmed.slice(20)}`.toLowerCase()
+        console.info(`[INFO] Auto-formatted 32-character DEPLOY_D1_DATABASE_ID to standard UUID: ${formatted}`)
+        return formatted
+      }
+      return trimmed
+    }
+    return value
+  },
+  z.string().trim().min(1),
+)
+
 const deployEnvSchema = z.object({
-  DEPLOY_D1_DATABASE_ID: z.string().trim().min(1),
+  DEPLOY_D1_DATABASE_ID: d1DatabaseId,
   DEPLOY_KV_NAMESPACE_ID: z.string().trim().min(1),
   // Optional Wrangler preview binding; falls back to DEPLOY_KV_NAMESPACE_ID
   DEPLOY_KV_PREVIEW_NAMESPACE_ID: optionalName,
@@ -68,6 +85,14 @@ if (parseErrors.length > 0) {
 }
 
 const env = await loadEnv()
+
+if (env.DEPLOY_D1_DATABASE_ID.replace(/-/g, '') === env.DEPLOY_KV_NAMESPACE_ID.replace(/-/g, '')) {
+  console.warn(
+    `\n[WARNING] DEPLOY_D1_DATABASE_ID ("${env.DEPLOY_D1_DATABASE_ID}") and DEPLOY_KV_NAMESPACE_ID ("${env.DEPLOY_KV_NAMESPACE_ID}") are identical (ignoring hyphens).\n`
+    + `Cloudflare D1 databases and KV namespaces are distinct products. Using the same ID for both will cause deployment or runtime failures.\n`,
+  )
+}
+
 const d1 = getBinding(config, 'd1_databases', 'DB')
 const kv = getBinding(config, 'kv_namespaces', 'KV')
 const analytics = getBinding(config, 'analytics_engine_datasets', 'ANALYTICS')

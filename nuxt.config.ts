@@ -116,8 +116,6 @@ export default defineNuxtConfig({
         '@number-flow/vue',
         '@tanstack/vue-form',
         '@unovis/vue',
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
         '@vueuse/core',
         'class-variance-authority',
         'clsx',

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { CreditCard, Globe, Key, ScrollText, User, Users, Webhook } from '@lucide/vue'
+
 interface NavItem {
   title: string
   url: string
@@ -6,8 +8,8 @@ interface NavItem {
   isActive: boolean
 }
 
-const { title } = useAppConfig()
 const { isActive } = useDashboardRoute()
+const route = useRoute()
 
 const platformItems = computed<NavItem[]>(() => [
   {
@@ -38,6 +40,48 @@ const platformItems = computed<NavItem[]>(() => [
 
 const settingsItems = computed<NavItem[]>(() => [
   {
+    title: 'Account Profile',
+    url: '/dashboard/settings/profile',
+    icon: User,
+    isActive: route.path === '/dashboard/settings/profile',
+  },
+  {
+    title: 'Team Members',
+    url: '/dashboard/settings/team',
+    icon: Users,
+    isActive: route.path === '/dashboard/settings/team',
+  },
+  {
+    title: 'Custom Domains',
+    url: '/dashboard/settings/domains',
+    icon: Globe,
+    isActive: route.path === '/dashboard/settings/domains',
+  },
+  {
+    title: 'API Keys',
+    url: '/dashboard/settings/api-keys',
+    icon: Key,
+    isActive: route.path === '/dashboard/settings/api-keys',
+  },
+  {
+    title: 'Webhooks',
+    url: '/dashboard/settings/webhooks',
+    icon: Webhook,
+    isActive: route.path === '/dashboard/settings/webhooks',
+  },
+  {
+    title: 'Audit Logs',
+    url: '/dashboard/settings/audit-logs',
+    icon: ScrollText,
+    isActive: route.path === '/dashboard/settings/audit-logs',
+  },
+  {
+    title: 'Billing & Plans',
+    url: '/dashboard/settings/billing',
+    icon: CreditCard,
+    isActive: route.path === '/dashboard/settings/billing',
+  },
+  {
     title: 'nav.migrate',
     url: '/dashboard/migrate',
     icon: DASHBOARD_ROUTES.migrate.icon,
@@ -49,34 +93,7 @@ const settingsItems = computed<NavItem[]>(() => [
 <template>
   <Sidebar collapsible="icon" variant="inset">
     <SidebarHeader>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size="lg" as-child>
-            <NuxtLink
-              to="/" :title="title"
-            >
-              <div
-                class="
-                  flex aspect-square size-8 items-center justify-center
-                  rounded-full
-                "
-              >
-                <img
-                  src="/sink.png"
-                  alt=""
-                  width="32"
-                  height="32"
-                  class="size-8 rounded-full"
-                >
-              </div>
-              <div class="grid flex-1 text-left text-sm/tight">
-                <span class="truncate font-medium">{{ title }}</span>
-                <span class="truncate text-xs">{{ $t('sidebar.subtitle') }}</span>
-              </div>
-            </NuxtLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <DashboardSidebarWorkspaceSwitcher />
     </SidebarHeader>
     <SidebarContent>
       <DashboardSidebarNavMain :platform-items="platformItems" :settings-items="settingsItems" />

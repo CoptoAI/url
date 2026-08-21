@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronsUpDown, LogOut } from '@lucide/vue'
+import { ChevronsUpDown, LogOut, User as UserIcon } from '@lucide/vue'
 import { useSidebar } from '@/components/ui/sidebar'
 
 interface User {
@@ -8,7 +8,7 @@ interface User {
 }
 
 const { isMobile } = useSidebar()
-const { userEmail } = useAuthSession()
+const { userEmail, userName } = useAuthSession()
 const menuButton = useTemplateRef<{ $el: HTMLElement }>('menuButton')
 const menuOpen = shallowRef(false)
 const logoutOpen = shallowRef(false)
@@ -26,10 +26,10 @@ function restoreMenuFocus(event: Event) {
 }
 
 const user = computed<User>(() => ({
-  name: userEmail.value?.split('@')[0] || '',
+  name: userName.value || userEmail.value?.split('@')[0] || 'User',
   email: userEmail.value || '',
 }))
-const avatarFallback = computed(() => user.value.name.charAt(0).toUpperCase() || 'R')
+const avatarFallback = computed(() => user.value.name.charAt(0).toUpperCase() || 'U')
 
 watch(userEmail, async (email, _previousEmail, onCleanup) => {
   avatarURL.value = ''
@@ -97,6 +97,13 @@ watch(userEmail, async (email, _previousEmail, onCleanup) => {
               </div>
             </div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            @select.prevent="navigateTo('/dashboard/settings/profile')"
+          >
+            <UserIcon class="size-4" />
+            {{ $t('profile.title') }}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

@@ -77,5 +77,6 @@ useSeoMeta({
         </div>
       </div>
     </SidebarInset>
+    <DashboardSaasWelcomeOnboardingModal />
   </SidebarProvider>
 </template>

@@ -59,6 +59,27 @@ export default eventHandler(async (event) => {
       statusText: 'Link already exists',
     })
   }
+
+  const linkObj = link as Record<string, unknown>
+  const ctx = event.context as Record<string, unknown>
+  const orgId = (linkObj.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
+  if (orgId) {
+    const { recordAuditLog } = await import('../../saas/audit')
+    const { dispatchWebhookEvent } = await import('../../saas/webhooks')
+    await recordAuditLog(event, {
+      organizationId: orgId,
+      action: 'link.created',
+      resourceType: 'link',
+      resourceId: link.slug,
+      details: { url: link.url, title: link.title },
+    })
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'link.created',
+      payload: { slug: link.slug, url: link.url, title: link.title, comment: link.comment },
+    })
+  }
+
   setResponseStatus(event, 201)
   return buildLinkResponse(event, link)
 })

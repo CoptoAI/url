@@ -1,0 +1,27 @@
+{
+  "webhooks": {
+    "title": "Webhooks",
+    "description": "Send real-time HTTP notifications to your external services when events happen.",
+    "create_webhook": "Add Webhook",
+    "edit_webhook": "Edit Webhook",
+    "delete_webhook": "Delete Webhook",
+    "delete_confirm": "Are you sure you want to delete this webhook endpoint?",
+    "url": "Endpoint URL",
+    "url_placeholder": "https://api.yourdomain.com/webhooks",
+    "secret": "Signing Secret",
+    "secret_copy": "Copy Signing Secret",
+    "secret_notice": "Make sure to copy your webhook secret now. It will not be shown again in full.",
+    "events": "Subscribed Events",
+    "description_label": "Description",
+    "description_placeholder": "e.g. Zapier / Slack integration",
+    "active": "Active",
+    "test_ping": "Send Test Ping",
+    "deliveries": "Delivery History",
+    "empty": "No webhooks configured. Create one to receive real-time event notifications.",
+    "delivery_history_title": "Recent Webhook Deliveries",
+    "delivery_empty": "No deliveries recorded yet.",
+    "status": "Status",
+    "latency": "Latency",
+    "event": "Event"
+  }
+}

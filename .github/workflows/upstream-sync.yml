@@ -1,0 +1,135 @@
+name: Upstream Sync & Notify
+
+on:
+  schedule:
+    # Run daily at 04:00 UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      auto_merge:
+        description: Attempt automatic merge if no conflicts
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-and-sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Configure Git Identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add and Fetch Upstream
+        run: |
+          git remote add upstream https://github.com/ccbikai/sink.git || true
+          git fetch upstream master --tags
+
+      - name: Check for New Upstream Commits
+        id: check_upstream
+        run: |
+          UPSTREAM_COMMITS=$(git log master..upstream/master --oneline)
+          COMMIT_COUNT=$(git rev-list --count master..upstream/master)
+          echo "commit_count=$COMMIT_COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$COMMIT_COUNT" -gt 0 ]; then
+            echo "has_updates=true" >> "$GITHUB_OUTPUT"
+            echo "Found $COMMIT_COUNT new commit(s) in upstream/master."
+
+            # Format changelog
+            echo "### 🚀 Upstream Changes from ccbikai/sink" > changelog.md
+            echo "" >> changelog.md
+            echo "\`\`\`" >> changelog.md
+            git log master..upstream/master --pretty=format:"* %h - %s (%an, %ar)" >> changelog.md
+            echo "" >> changelog.md
+            echo "\`\`\`" >> changelog.md
+          else
+            echo "has_updates=false" >> "$GITHUB_OUTPUT"
+            echo "Repository is fully up-to-date with upstream/master."
+          fi
+
+      - name: Create Sync Branch and Pull Request
+        if: steps.check_upstream.outputs.has_updates == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE_TAG=$(date +'%Y-%m-%d-%H%M')
+          SYNC_BRANCH="sync/upstream-$DATE_TAG"
+
+          git checkout -b "$SYNC_BRANCH" master
+
+          # Attempt merge
+          MERGE_FAILED=false
+          if ! git merge upstream/master -m "chore(upstream): merge ccbikai/sink updates ($DATE_TAG)"; then
+            echo "CONFLICT_DETECTED=true" >> "$GITHUB_ENV"
+            MERGE_FAILED=true
+          else
+            echo "CONFLICT_DETECTED=false" >> "$GITHUB_ENV"
+          fi
+
+          git push origin "$SYNC_BRANCH" --force
+
+          PR_TITLE="[Upstream Sync] $DATE_TAG - (${{ steps.check_upstream.outputs.commit_count }} commits from ccbikai/sink)"
+
+          if [ "$MERGE_FAILED" = "true" ]; then
+            PR_BODY=$(cat <<EOF
+          ⚠️ **Merge Conflicts Detected**
+
+          New commits from \`ccbikai/sink:master\` have conflicts with our custom SaaS modules.
+
+          $(cat changelog.md)
+
+          ### 🛠 Resolution Steps
+          \`\`\`bash
+          git checkout $SYNC_BRANCH
+          git merge upstream/master
+          # Resolve conflicts in your editor
+          git commit
+          git push origin $SYNC_BRANCH
+          \`\`\`
+          EOF
+          )
+            gh pr create --base master --head "$SYNC_BRANCH" --title "$PR_TITLE" --body "$PR_BODY" --label "upstream-sync,needs-manual-review"
+          else
+            PR_BODY=$(cat <<EOF
+          ✅ **Clean Upstream Sync Available**
+
+          $(cat changelog.md)
+
+          Review changes and run test suite before merging into \`master\`.
+          EOF
+          )
+            gh pr create --base master --head "$SYNC_BRANCH" --title "$PR_TITLE" --body "$PR_BODY" --label "upstream-sync"
+          fi
+
+      - name: Send Notification Webhook
+        if: steps.check_upstream.outputs.has_updates == 'true' && env.UPSTREAM_SYNC_WEBHOOK_URL != ''
+        env:
+          UPSTREAM_SYNC_WEBHOOK_URL: ${{ secrets.UPSTREAM_SYNC_WEBHOOK_URL }}
+        run: |
+          PAYLOAD=$(cat <<EOF
+          {
+            "content": "🔔 **Sink Upstream Update Detected!**\n**${{ steps.check_upstream.outputs.commit_count }} new commits** available from \`ccbikai/sink:master\`.\nA sync PR has been generated.",
+            "embeds": [
+              {
+                "title": "Upstream Sync PR Created",
+                "description": "Conflict status: ${{ env.CONFLICT_DETECTED }}",
+                "color": ${{ env.CONFLICT_DETECTED == 'true' && 15158332 || 3066993 }}
+              }
+            ]
+          }
+          EOF
+          )
+          curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$UPSTREAM_SYNC_WEBHOOK_URL" || true

@@ -7,7 +7,9 @@
     "dashboard",
     "links",
     "check",
-    "migrate"
+    "migrate",
+    "audit",
+    "webhooks"
   ],
   "locales": [
     {
