@@ -9,7 +9,7 @@ definePageMeta({
 
 const { activeOrganization, customDomains, fetchCustomDomains, isLoading } = useSaaS()
 const runtimeConfig = useRuntimeConfig()
-const defaultCnameTarget = computed(() => (runtimeConfig.public?.cfFallbackOrigin as string) || 'cname.shaf.is')
+const defaultCnameTarget = computed(() => (runtimeConfig.public?.cfFallbackOrigin as string) || 'cname.shaf.app')
 const addOpen = shallowRef(false)
 const configureOpen = shallowRef(false)
 const domainToConfigure = shallowRef<CustomDomain | null>(null)

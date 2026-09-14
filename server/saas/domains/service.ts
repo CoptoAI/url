@@ -22,7 +22,7 @@ async function callCloudflareCustomHostnames(event: H3Event, action: 'create' | 
   const config = useRuntimeConfig(event)
   const zoneId = config.cfZoneId
   const apiToken = config.cfApiToken
-  const defaultCnameTarget = (config.cfFallbackOrigin as string) || 'cname.shaf.is'
+  const defaultCnameTarget = (config.cfFallbackOrigin as string) || 'cname.shaf.app'
 
   const isTestDomain = domain.endsWith('.test') || domain.endsWith('.example') || domain.endsWith('.invalid') || domain.endsWith('.localhost')
   if (!zoneId || !apiToken || isTestDomain) {
@@ -130,7 +130,7 @@ export async function addCustomDomain(event: H3Event, orgId: string, domain: str
   const domainId = `dom_${nanoid()}`
 
   const config = useRuntimeConfig(event)
-  const defaultCnameTarget = (config.cfFallbackOrigin as string) || 'cname.shaf.is'
+  const defaultCnameTarget = (config.cfFallbackOrigin as string) || 'cname.shaf.app'
 
   const [created] = await db.insert(customDomains).values({
     id: domainId,

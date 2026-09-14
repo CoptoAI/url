@@ -35,7 +35,7 @@ export default defineNuxtConfig({
       .map(d => d.trim().toLowerCase())
       .filter(Boolean),
     cfZoneId: process.env.NUXT_CF_ZONE_ID || '',
-    cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
+    cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.app',
     cfAccessTeamDomain: '',
     cfAccessAud: '',
     redirectStatusCode: '301',
@@ -66,7 +66,7 @@ export default defineNuxtConfig({
         .split(',')
         .map(d => d.trim().toLowerCase())
         .filter(Boolean),
-      cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
+      cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.app',
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',

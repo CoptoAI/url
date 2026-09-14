@@ -26,7 +26,7 @@
     "NUXT_DASHBOARD_DOMAIN": "dash.shaf.app",
     "NUXT_DEFAULT_SHORT_DOMAIN": "shaf.is",
     "NUXT_SYSTEM_SHORT_DOMAINS": "shaf.is",
-    "NUXT_CF_FALLBACK_ORIGIN": "cname.shaf.is",
+    "NUXT_CF_FALLBACK_ORIGIN": "cname.shaf.app",
     "NUXT_DATASET": "shaf"
   },
   "ai": {
