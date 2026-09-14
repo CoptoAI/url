@@ -70,13 +70,17 @@ const form = useForm({
   },
 })
 
-function toggleEvent(event: WebhookEvent) {
-  const current = form.getFieldValue('events')
-  if (current.includes(event)) {
-    form.setFieldValue('events', current.filter(e => e !== event))
+function toggleEvent(event: WebhookEvent, field?: { state: { value: WebhookEvent[] }, handleChange: (val: WebhookEvent[]) => void }) {
+  const current = field ? field.state.value : (form.getFieldValue('events') || [])
+  const updated = current.includes(event)
+    ? current.filter(e => e !== event)
+    : [...current, event]
+
+  if (field) {
+    field.handleChange(updated)
   }
   else {
-    form.setFieldValue('events', [...current, event])
+    form.setFieldValue('events', updated)
   }
 }
 </script>
@@ -121,45 +125,54 @@ function toggleEvent(event: WebhookEvent) {
       </template>
     </form.Field>
 
-    <div class="space-y-2">
-      <Label>{{ $t('webhooks.events') }}</Label>
-      <div
-        class="
-          grid grid-cols-1 gap-2
-          sm:grid-cols-2
-        "
-      >
-        <div
-          v-for="item in availableEvents"
-          :key="item.event"
-          class="
-            flex cursor-pointer items-center justify-between rounded-md border
-            p-2 text-xs transition-colors
-          "
-          :class="form.getFieldValue('events').includes(item.event) ? `
-            border-primary bg-primary/5 text-foreground
-          ` : `
-            text-muted-foreground
-            hover:border-border/80
-          `"
-          @click="toggleEvent(item.event)"
-        >
-          <span class="font-medium">{{ item.label }}</span>
+    <form.Field name="events">
+      <template #default="{ field }">
+        <div class="space-y-2">
+          <Label>{{ $t('webhooks.events') }}</Label>
           <div
-            class="flex size-4 items-center justify-center rounded-sm border"
-            :class="form.getFieldValue('events').includes(item.event) ? `
-              border-primary bg-primary text-primary-foreground
-            ` : `border-muted`"
+            class="
+              grid grid-cols-1 gap-2
+              sm:grid-cols-2
+            "
           >
-            <Check
-              v-if="form.getFieldValue('events').includes(item.event)" class="
-                size-3
+            <button
+              v-for="item in availableEvents"
+              :key="item.event"
+              type="button"
+              role="checkbox"
+              :aria-checked="field.state.value.includes(item.event)"
+              class="
+                flex cursor-pointer items-center justify-between rounded-md
+                border p-2 text-xs transition-colors outline-none select-none
+                focus-visible:ring-2 focus-visible:ring-ring
               "
-            />
+              :class="field.state.value.includes(item.event) ? `
+                border-primary bg-primary/5 text-foreground
+              ` : `
+                text-muted-foreground
+                hover:border-border/80 hover:text-foreground
+              `"
+              @click="toggleEvent(item.event, field)"
+            >
+              <span class="font-medium">{{ item.label }}</span>
+              <div
+                class="
+                  flex size-4 items-center justify-center rounded-sm border
+                  transition-colors
+                "
+                :class="field.state.value.includes(item.event) ? `
+                  border-primary bg-primary text-primary-foreground
+                ` : `border-muted`"
+              >
+                <Check
+                  v-if="field.state.value.includes(item.event)" class="size-3"
+                />
+              </div>
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+      </template>
+    </form.Field>
 
     <div class="flex justify-end gap-2 border-t pt-4">
       <Button variant="ghost" type="button" @click="$emit('cancel')">
