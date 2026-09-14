@@ -313,24 +313,12 @@ describe('password protected redirect', { concurrent: false }, () => {
     expect(res.headers.get('Location')).toBe('https://shaf.app')
   })
 
-  it('redirects root request on secondary short domain wi.la to https://shaf.app', async () => {
-    const res = await fetch('/', {
-      redirect: 'manual',
-      headers: {
-        Host: 'wi.la',
-      },
-    })
-    expect(res.status).toBe(302)
-    expect(res.headers.get('Location')).toBe('https://shaf.app')
-  })
-
-  it('resolves link created for wi.la on wi.la host', async () => {
-    const slug = `wila-${crypto.randomUUID()}`
-    const targetUrl = 'https://example.com/wila-target'
+  it('resolves link created without domain on primary short domain shaf.is', async () => {
+    const slug = `shaf-${crypto.randomUUID()}`
+    const targetUrl = 'https://example.com/shaf-target'
     const createRes = await postJson('/api/link/create', {
       url: targetUrl,
       slug,
-      customDomain: 'wi.la',
     })
     expect(createRes.status).toBe(201)
     createdSlugs.push(slug)
@@ -338,10 +326,20 @@ describe('password protected redirect', { concurrent: false }, () => {
     const res = await fetch(`/${slug}`, {
       redirect: 'manual',
       headers: {
-        Host: 'wi.la',
+        Host: 'shaf.is',
       },
     })
     expect(res.status).toBe(301)
     expect(res.headers.get('Location')).toBe(targetUrl)
+  })
+
+  it('rejects link creation with an unconfigured custom domain', async () => {
+    const slug = `invalid-dom-${crypto.randomUUID()}`
+    const createRes = await postJson('/api/link/create', {
+      url: 'https://example.com/invalid-domain',
+      slug,
+      customDomain: 'unconfigured-domain.com',
+    })
+    expect(createRes.status).toBe(400)
   })
 })

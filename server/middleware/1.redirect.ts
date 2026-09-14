@@ -72,7 +72,7 @@ export default eventHandler(async (event) => {
   const normalizedSystemShortDomains = (
     Array.isArray(systemShortDomains)
       ? systemShortDomains
-      : ((systemShortDomains as string) || 'shaf.is,wi.la').split(',')
+      : ((systemShortDomains as string) || normalizedDefaultShortDomain || 'shaf.is').split(',')
   ).map((d: string) => d.trim().toLowerCase()).filter(Boolean)
 
   const isSystemShortDomain = normalizedSystemShortDomains.includes(requestHost)
@@ -108,7 +108,7 @@ export default eventHandler(async (event) => {
   }
 
   if (event.path === '/') {
-    // 3. System short domains (shaf.is, wi.la) redirect root to main marketing domain
+    // 3. System short domains (e.g. shaf.is) redirect root to main marketing domain
     if (isSystemShortDomain) {
       return sendRedirect(event, `https://${normalizedMainDomain}`, 302)
     }
@@ -150,14 +150,14 @@ export default eventHandler(async (event) => {
         link = null
       }
     }
-    // B. If request arrived via a system short domain (e.g. wi.la or shaf.is)
+    // B. If request arrived via a system short domain (e.g. shaf.is)
     else if (link && isSystemShortDomain) {
       if (link.customDomainId) {
         // Link belongs to a tenant custom domain, do not resolve on system domain
         link = null
       }
       else if (link.customDomain && link.customDomain.toLowerCase() !== requestHost) {
-        // Link was created specifically for another system domain (e.g. wi.la vs shaf.is)
+        // Link was created specifically for another system domain
         link = null
       }
     }

@@ -74,7 +74,7 @@ export default eventHandler(async (event) => {
     const allowed = (
       Array.isArray(systemShortDomains)
         ? systemShortDomains
-        : ((systemShortDomains as string) || `${defaultShortDomain || 'shaf.is'},wi.la`).split(',')
+        : ((systemShortDomains as string) || (defaultShortDomain as string) || 'shaf.is').split(',')
     ).map((d: string) => d.trim().toLowerCase()).filter(Boolean)
     if (!allowed.includes(link.customDomain.toLowerCase())) {
       throw createError({

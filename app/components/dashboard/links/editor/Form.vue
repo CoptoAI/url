@@ -35,7 +35,7 @@ const availableSystemDomains = computed(() => {
   if (Array.isArray(systemShortDomains)) {
     return systemShortDomains
   }
-  return ((systemShortDomains as string) || 'shaf.is,wi.la')
+  return ((systemShortDomains as string) || fallbackShortDomain)
     .split(',')
     .map(s => s.trim().toLowerCase())
     .filter(Boolean)
