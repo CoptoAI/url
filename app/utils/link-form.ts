@@ -41,6 +41,7 @@ export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isE
     url: value.url,
     slug: value.slug,
     customDomainId: value.customDomainId || undefined,
+    customDomain: value.customDomain || undefined,
     comment: value.comment || undefined,
     tags: value.tags,
     expiration: value.expiration ? date2unix(value.expiration, 'end') : undefined,

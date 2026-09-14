@@ -65,9 +65,8 @@ const counterErrorIds = inject(LINKS_COUNTER_ERROR_IDS_KEY)
 const retryCounters = inject(RETRY_LINK_COUNTERS_KEY)
 const countersError = computed(() => counterErrorIds?.value.has(props.link.id) ?? false)
 
-const requestUrl = useRequestURL()
-const host = requestUrl.host
-const origin = requestUrl.origin
+const { defaultShortDomain } = useRuntimeConfig().public
+const fallbackShortDomain = (defaultShortDomain as string) || 'shaf.is'
 
 const { customDomains } = useSaaS()
 const matchedDomain = computed(() => {
@@ -76,7 +75,7 @@ const matchedDomain = computed(() => {
   return (customDomains.value || []).find(d => d.id === props.link.customDomainId) || null
 })
 
-const effectiveHost = computed(() => matchedDomain.value?.domain || props.link.customDomain || host)
+const effectiveHost = computed(() => matchedDomain.value?.domain || props.link.customDomain || fallbackShortDomain)
 
 function getLinkHost(url: string): string | undefined {
   const { host } = parseURL(url)
@@ -90,7 +89,7 @@ const shortLink = computed(() => {
   if (props.link.customDomain) {
     return `https://${props.link.customDomain}/${props.link.slug}`
   }
-  return `${origin}/${props.link.slug}`
+  return `https://${fallbackShortDomain}/${props.link.slug}`
 })
 
 const linkIcon = computed(() => `https://unavatar.webp.se/${getLinkHost(props.link.url)}?fallback=https://sink.cool/icon.png`)

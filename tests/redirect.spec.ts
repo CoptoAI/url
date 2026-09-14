@@ -284,21 +284,64 @@ describe('password protected redirect', { concurrent: false }, () => {
     const res = await fetch('/', {
       redirect: 'manual',
       headers: {
-        Host: 'app.shaf.is',
+        Host: 'dash.shaf.app',
       },
     })
     expect(res.status).toBe(302)
     expect(res.headers.get('Location')).toBe('/dashboard')
   })
 
-  it('redirects /dashboard/links on main domain to app.shaf.is', async () => {
+  it('redirects /dashboard/links on main domain to dash.shaf.app', async () => {
     const res = await fetch('/dashboard/links', {
+      redirect: 'manual',
+      headers: {
+        Host: 'shaf.app',
+      },
+    })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://dash.shaf.app/dashboard/links')
+  })
+
+  it('redirects root request on primary short domain shaf.is to https://shaf.app', async () => {
+    const res = await fetch('/', {
       redirect: 'manual',
       headers: {
         Host: 'shaf.is',
       },
     })
     expect(res.status).toBe(302)
-    expect(res.headers.get('Location')).toBe('https://app.shaf.is/dashboard/links')
+    expect(res.headers.get('Location')).toBe('https://shaf.app')
+  })
+
+  it('redirects root request on secondary short domain wi.la to https://shaf.app', async () => {
+    const res = await fetch('/', {
+      redirect: 'manual',
+      headers: {
+        Host: 'wi.la',
+      },
+    })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://shaf.app')
+  })
+
+  it('resolves link created for wi.la on wi.la host', async () => {
+    const slug = `wila-${crypto.randomUUID()}`
+    const targetUrl = 'https://example.com/wila-target'
+    const createRes = await postJson('/api/link/create', {
+      url: targetUrl,
+      slug,
+      customDomain: 'wi.la',
+    })
+    expect(createRes.status).toBe(201)
+    createdSlugs.push(slug)
+
+    const res = await fetch(`/${slug}`, {
+      redirect: 'manual',
+      headers: {
+        Host: 'wi.la',
+      },
+    })
+    expect(res.status).toBe(301)
+    expect(res.headers.get('Location')).toBe(targetUrl)
   })
 })

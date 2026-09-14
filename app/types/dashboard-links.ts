@@ -13,6 +13,7 @@ export type DashboardLinkFormData = Omit<LinkFormData, 'tags'> & {
 export type DashboardLinkSearchItem = LinkSearchItem & {
   expiration?: number
   tags?: string[]
+  customDomain?: string
 }
 
 export type DashboardLinkListResponse = Omit<LinkListResponse, 'links'> & {

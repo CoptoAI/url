@@ -21,7 +21,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const linksSearchStore = useDashboardLinksSearchStore()
-const requestUrl = useRequestURL()
 const { customDomains, fetchCustomDomains } = useSaaS()
 
 onMounted(() => {
@@ -29,6 +28,18 @@ onMounted(() => {
 })
 
 const activeCustomDomains = computed(() => (customDomains.value || []).filter(d => d.status === 'active'))
+
+const { defaultShortDomain, systemShortDomains } = useRuntimeConfig().public
+const fallbackShortDomain = (defaultShortDomain as string) || 'shaf.is'
+const availableSystemDomains = computed(() => {
+  if (Array.isArray(systemShortDomains)) {
+    return systemShortDomains
+  }
+  return ((systemShortDomains as string) || 'shaf.is,wi.la')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean)
+})
 
 const urlValidator = UrlSchema
 const slugValidator = SlugSchema
@@ -68,6 +79,32 @@ const tagsInput = useTemplateRef<{ commit: () => boolean }>('tagsInput')
 
 watch(isSubmitting, value => emit('update:submitting', value), { immediate: true })
 watch(isDirty, value => emit('update:dirty', value), { immediate: true })
+
+const currentDomainSelection = computed(() => {
+  const cId = form.state.values.customDomainId
+  const cDom = form.state.values.customDomain
+  if (cId)
+    return cId
+  if (cDom && cDom !== fallbackShortDomain)
+    return `system:${cDom}`
+  return ''
+})
+
+function handleDomainSelection(val: string) {
+  if (!val) {
+    form.setFieldValue('customDomainId', '')
+    form.setFieldValue('customDomain', '')
+  }
+  else if (val.startsWith('system:')) {
+    form.setFieldValue('customDomainId', '')
+    form.setFieldValue('customDomain', val.replace('system:', ''))
+  }
+  else {
+    const matched = activeCustomDomains.value.find(d => d.id === val)
+    form.setFieldValue('customDomainId', val)
+    form.setFieldValue('customDomain', matched?.domain || '')
+  }
+}
 
 const validateUrl = makeZodValidator(urlValidator)
 const validateSlug = makeZodValidator(slugValidator)
@@ -155,7 +192,12 @@ watch(currentUrl, (url) => {
   void findDuplicateLink(url, generation)
 }, { immediate: true })
 
-const shortDuplicateLink = computed(() => duplicateLink.value ? `${requestUrl.origin}/${duplicateLink.value.slug}` : '')
+const shortDuplicateLink = computed(() => {
+  if (!duplicateLink.value)
+    return ''
+  const dom = duplicateLink.value.customDomain || fallbackShortDomain
+  return `https://${dom}/${duplicateLink.value.slug}`
+})
 
 const { previewMode } = useRuntimeConfig().public
 const isExpiredLink = computed(() => Boolean(
@@ -287,41 +329,42 @@ defineExpose({ initializeRandomSlug })
           </Field>
         </form.Field>
 
-        <form.Field
-          v-if="activeCustomDomains.length > 0"
-          v-slot="{ field }"
-          name="customDomainId"
-        >
-          <Field>
-            <FieldLabel :for="`${formId}-${field.name}`">
-              {{ $t('links.form.domain') || 'Domain' }}
-            </FieldLabel>
-            <Select
-              :model-value="field.state.value || ''"
-              :disabled="isEdit"
-              @update:model-value="(val: any) => field.handleChange(String(val ?? ''))"
-            >
-              <SelectTrigger :id="`${formId}-${field.name}`">
-                <SelectValue placeholder="Default Domain" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">
-                  Default ({{ requestUrl.host }})
-                </SelectItem>
-                <SelectItem
-                  v-for="d in activeCustomDomains"
-                  :key="d.id"
-                  :value="d.id"
-                >
-                  {{ d.domain }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <FieldDescription>
-              Select the branded domain for this short link.
-            </FieldDescription>
-          </Field>
-        </form.Field>
+        <Field v-if="availableSystemDomains.length > 1 || activeCustomDomains.length > 0">
+          <FieldLabel :for="`${formId}-domain`">
+            {{ $t('links.form.domain') || 'Domain' }}
+          </FieldLabel>
+          <Select
+            :model-value="currentDomainSelection"
+            :disabled="isEdit"
+            @update:model-value="(val: any) => handleDomainSelection(String(val ?? ''))"
+          >
+            <SelectTrigger :id="`${formId}-domain`">
+              <SelectValue placeholder="Select Domain" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">
+                {{ fallbackShortDomain }} (Default)
+              </SelectItem>
+              <SelectItem
+                v-for="sDom in availableSystemDomains.filter(d => d !== fallbackShortDomain)"
+                :key="sDom"
+                :value="`system:${sDom}`"
+              >
+                {{ sDom }}
+              </SelectItem>
+              <SelectItem
+                v-for="d in activeCustomDomains"
+                :key="d.id"
+                :value="d.id"
+              >
+                {{ d.domain }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <FieldDescription>
+            Select the short domain for this link.
+          </FieldDescription>
+        </Field>
 
         <form.Field
           v-slot="{ field }"

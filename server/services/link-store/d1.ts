@@ -116,6 +116,7 @@ function rowToLink(row: LinkRow): Link {
     'unsafe',
     'geo',
     'customDomainId',
+    'customDomain',
     'organizationId',
   ] as const
 
@@ -154,6 +155,7 @@ export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt
     organizationId: event.context.organizationId || null,
     createdBy: event.context.userID && event.context.userID !== 'root' ? event.context.userID : null,
     customDomainId: link.customDomainId ?? event.context.customDomainId ?? null,
+    customDomain: link.customDomain ?? null,
     url: link.url,
     comment: link.comment ?? null,
     createdAt: link.createdAt,

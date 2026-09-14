@@ -60,26 +60,34 @@ export default eventHandler(async (event) => {
     redirectNoStore,
     mainDomain,
     dashboardDomain,
+    defaultShortDomain,
+    systemShortDomains,
   } = useRuntimeConfig(event)
   const { cloudflare } = event.context
 
   const requestHost = getRequestHost(event, { xForwardedHost: true }).split(':')[0]!.toLowerCase()
-  const normalizedMainDomain = ((mainDomain as string) || 'shaf.is').toLowerCase()
-  const normalizedDashboardDomain = ((dashboardDomain as string) || 'app.shaf.is').toLowerCase()
+  const normalizedMainDomain = ((mainDomain as string) || 'shaf.app').toLowerCase()
+  const normalizedDashboardDomain = ((dashboardDomain as string) || 'dash.shaf.app').toLowerCase()
+  const normalizedDefaultShortDomain = ((defaultShortDomain as string) || 'shaf.is').toLowerCase()
+  const normalizedSystemShortDomains = (
+    Array.isArray(systemShortDomains)
+      ? systemShortDomains
+      : ((systemShortDomains as string) || 'shaf.is,wi.la').split(',')
+  ).map((d: string) => d.trim().toLowerCase()).filter(Boolean)
 
-  // 1. App dashboard subdomain routing (e.g. app.shaf.is)
-  if (normalizedDashboardDomain && requestHost === normalizedDashboardDomain) {
+  const isSystemShortDomain = normalizedSystemShortDomains.includes(requestHost)
+  const isDashboardHost = normalizedDashboardDomain && requestHost === normalizedDashboardDomain
+  const isMarketingHost = requestHost === normalizedMainDomain || requestHost === `www.${normalizedMainDomain}`
+
+  // 1. App dashboard subdomain routing (e.g. dash.shaf.app)
+  if (isDashboardHost) {
     if (event.path === '/') {
       return sendRedirect(event, '/dashboard', 302)
     }
   }
 
-  // 2. Main marketing domain routing (e.g. shaf.is or www.shaf.is)
-  if (
-    normalizedDashboardDomain
-    && normalizedDashboardDomain !== requestHost
-    && (requestHost === normalizedMainDomain || requestHost === `www.${normalizedMainDomain}`)
-  ) {
+  // 2. Main marketing domain routing (e.g. shaf.app or www.shaf.app)
+  if (isMarketingHost && normalizedDashboardDomain && normalizedDashboardDomain !== requestHost) {
     if (
       event.path.startsWith('/dashboard')
       || event.path.startsWith('/auth')
@@ -100,6 +108,10 @@ export default eventHandler(async (event) => {
   }
 
   if (event.path === '/') {
+    // 3. System short domains (shaf.is, wi.la) redirect root to main marketing domain
+    if (isSystemShortDomain) {
+      return sendRedirect(event, `https://${normalizedMainDomain}`, 302)
+    }
     if (customDomainConfig?.rootRedirectUrl) {
       return sendRedirect(event, customDomainConfig.rootRedirectUrl)
     }
@@ -128,15 +140,32 @@ export default eventHandler(async (event) => {
       link = await getLink(event, slug, linkCacheTtl)
     }
 
-    // If request arrived via a custom domain, ensure link belongs to this custom domain or its organization
+    // Domain scoping rules:
+    // A. If request arrived via a tenant custom domain, ensure link matches that domain
     if (link && customDomainConfig) {
       if (link.customDomainId && link.customDomainId !== customDomainConfig.domainId) {
         link = null
       }
+      if (link && link.customDomain && link.customDomain.toLowerCase() !== requestHost) {
+        link = null
+      }
     }
-    // If request arrived via primary domain, but the link is explicitly tied to a custom domain
-    else if (link && !customDomainConfig && link.customDomainId) {
-      // Link is attached to a custom domain
+    // B. If request arrived via a system short domain (e.g. wi.la or shaf.is)
+    else if (link && isSystemShortDomain) {
+      if (link.customDomainId) {
+        // Link belongs to a tenant custom domain, do not resolve on system domain
+        link = null
+      }
+      else if (link.customDomain && link.customDomain.toLowerCase() !== requestHost) {
+        // Link was created specifically for another system domain (e.g. wi.la vs shaf.is)
+        link = null
+      }
+    }
+    // C. If request arrived via marketing or dashboard domain, ensure we only resolve default links
+    else if (link && (isMarketingHost || isDashboardHost)) {
+      if (link.customDomainId || (link.customDomain && link.customDomain.toLowerCase() !== normalizedDefaultShortDomain)) {
+        link = null
+      }
     }
 
     if (link) {

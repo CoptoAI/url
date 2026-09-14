@@ -65,6 +65,21 @@ export default eventHandler(async (event) => {
         statusText: 'Custom domain is invalid or not active',
       })
     }
+    link.customDomain = domain.domain
+  }
+  else if (link.customDomain) {
+    const { systemShortDomains, defaultShortDomain } = useRuntimeConfig(event)
+    const allowed = (
+      Array.isArray(systemShortDomains)
+        ? systemShortDomains
+        : ((systemShortDomains as string) || `${defaultShortDomain || 'shaf.is'},wi.la`).split(',')
+    ).map((d: string) => d.trim().toLowerCase()).filter(Boolean)
+    if (!allowed.includes(link.customDomain.toLowerCase())) {
+      throw createError({
+        status: 400,
+        statusText: `Domain ${link.customDomain} is not a valid short domain`,
+      })
+    }
   }
 
   const existingLink: Link | null = await getAnyAuthoritativeLink(event, link.slug)

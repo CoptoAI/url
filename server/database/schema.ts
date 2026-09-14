@@ -121,6 +121,7 @@ export const links = sqliteTable('links', {
   organizationId: text('organization_id').references(() => organizations.id, { onDelete: 'set null' }),
   createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
   customDomainId: text('custom_domain_id').references(() => customDomains.id, { onDelete: 'set null' }),
+  customDomain: text('custom_domain'),
   url: text().notNull(),
   comment: text(),
   createdAt: integer('created_at').notNull(),

@@ -27,8 +27,13 @@ export default defineNuxtConfig({
     stripePriceIdStarter: process.env.NUXT_STRIPE_PRICE_ID_STARTER || '',
     stripePriceIdPro: process.env.NUXT_STRIPE_PRICE_ID_PRO || '',
     stripePriceIdEnterprise: process.env.NUXT_STRIPE_PRICE_ID_ENTERPRISE || '',
-    mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.is',
-    dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'app.shaf.is',
+    mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.app',
+    dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'dash.shaf.app',
+    defaultShortDomain: process.env.NUXT_DEFAULT_SHORT_DOMAIN || 'shaf.is',
+    systemShortDomains: (process.env.NUXT_SYSTEM_SHORT_DOMAINS || 'shaf.is,wi.la')
+      .split(',')
+      .map(d => d.trim().toLowerCase())
+      .filter(Boolean),
     cfZoneId: process.env.NUXT_CF_ZONE_ID || '',
     cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
     cfAccessTeamDomain: '',
@@ -54,8 +59,13 @@ export default defineNuxtConfig({
     webhookUrl: '',
     webhookSecret: '',
     public: {
-      mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.is',
-      dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'app.shaf.is',
+      mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.app',
+      dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'dash.shaf.app',
+      defaultShortDomain: process.env.NUXT_DEFAULT_SHORT_DOMAIN || 'shaf.is',
+      systemShortDomains: (process.env.NUXT_SYSTEM_SHORT_DOMAINS || 'shaf.is,wi.la')
+        .split(',')
+        .map(d => d.trim().toLowerCase())
+        .filter(Boolean),
       cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
       previewMode: '',
       slugDefaultLength: '6',

@@ -24,8 +24,9 @@ async function callCloudflareCustomHostnames(event: H3Event, action: 'create' | 
   const apiToken = config.cfApiToken
   const defaultCnameTarget = (config.cfFallbackOrigin as string) || 'cname.shaf.is'
 
-  if (!zoneId || !apiToken) {
-    // Development fallback mock
+  const isTestDomain = domain.endsWith('.test') || domain.endsWith('.example') || domain.endsWith('.invalid') || domain.endsWith('.localhost')
+  if (!zoneId || !apiToken || isTestDomain) {
+    // Development / test fallback mock
     return {
       id: hostnameId || `cf_mock_${nanoid()}`,
       hostname: domain,
