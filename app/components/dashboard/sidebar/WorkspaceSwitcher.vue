@@ -71,7 +71,14 @@ function handleSelect(org: Organization) {
               >
                 <Building2 class="size-3.5" />
               </div>
-              <span class="font-medium">{{ org.name }}</span>
+              <div class="flex flex-col text-left">
+                <span class="leading-none font-medium">{{ org.name }}</span>
+                <span
+                  v-if="org.role" class="
+                    mt-0.5 text-[10px] text-muted-foreground capitalize
+                  "
+                >{{ org.role }}</span>
+              </div>
             </div>
             <Check v-if="activeOrganization?.id === org.id" class="size-4" />
           </DropdownMenuItem>

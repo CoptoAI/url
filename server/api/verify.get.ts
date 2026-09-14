@@ -17,7 +17,11 @@ export default eventHandler((event) => {
   const userID: unknown = event.context.userID
   const userEmail: unknown = event.context.userEmail || (authMethod === 'api-key' ? `api-key@${event.context.organizationId}` : undefined)
   const userName: unknown = event.context.userName
+  const username: unknown = event.context.username
   const organizationId: unknown = event.context.organizationId
+  const onboardingCompleted: boolean = authMethod === 'session-jwt'
+    ? Boolean(event.context.onboardingCompleted)
+    : true
 
   if (
     (
@@ -45,7 +49,9 @@ export default eventHandler((event) => {
     userID,
     userEmail: typeof userEmail === 'string' ? userEmail : undefined,
     userName: typeof userName === 'string' ? userName : undefined,
+    username: typeof username === 'string' ? username : undefined,
     organizationId: typeof organizationId === 'string' ? organizationId : undefined,
+    onboardingCompleted,
     accessEnabled: isCloudflareAccessConfigured(cfAccessTeamDomain, cfAccessAud),
   }
 })

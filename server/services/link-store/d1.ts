@@ -24,6 +24,7 @@ export interface ListLinksOptions {
   sort?: LinkSortBy
   tag?: string
   status?: LinkStatus
+  domainId?: string
 }
 
 export interface ListLinksResult {
@@ -37,6 +38,7 @@ export interface LinkFilterOptions {
   url?: string
   tag?: string
   status?: LinkStatus
+  domainId?: string
 }
 
 export interface SearchLinksOptions extends LinkFilterOptions {
@@ -49,6 +51,7 @@ interface D1Cursor {
   createdAt?: number
   tag?: string
   status: LinkStatus
+  domainId?: string
 }
 
 function withoutQuery(url: string): string {
@@ -112,6 +115,8 @@ function rowToLink(row: LinkRow): Link {
     'password',
     'unsafe',
     'geo',
+    'customDomainId',
+    'organizationId',
   ] as const
 
   for (const field of optionalFields) {
@@ -148,7 +153,7 @@ export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt
     id: link.id,
     organizationId: event.context.organizationId || null,
     createdBy: event.context.userID && event.context.userID !== 'root' ? event.context.userID : null,
-    customDomainId: event.context.customDomainId || null,
+    customDomainId: link.customDomainId ?? event.context.customDomainId ?? null,
     url: link.url,
     comment: link.comment ?? null,
     createdAt: link.createdAt,
@@ -319,14 +324,14 @@ function encodeCursor(cursor: D1Cursor): string {
   return `${D1_CURSOR_PREFIX}${btoa(JSON.stringify(cursor))}`
 }
 
-function decodeCursor(cursor: string | undefined, sort: LinkSortBy, tag: string | undefined, status: LinkStatus): D1Cursor | undefined {
+function decodeCursor(cursor: string | undefined, sort: LinkSortBy, tag: string | undefined, status: LinkStatus, domainId?: string): D1Cursor | undefined {
   if (!cursor)
     return undefined
   if (!cursor.startsWith(D1_CURSOR_PREFIX))
     throw createError({ status: 400, statusText: 'Invalid pagination cursor' })
   try {
     const decoded = JSON.parse(atob(cursor.slice(D1_CURSOR_PREFIX.length))) as D1Cursor
-    if (decoded.sort !== sort || decoded.tag !== tag || decoded.status !== status || typeof decoded.slug !== 'string')
+    if (decoded.sort !== sort || decoded.tag !== tag || decoded.status !== status || decoded.domainId !== domainId || typeof decoded.slug !== 'string')
       throw new Error('Cursor does not match sort')
     if ((sort === 'newest' || sort === 'oldest') && typeof decoded.createdAt !== 'number')
       throw new Error('Cursor is missing creation time')
@@ -341,7 +346,7 @@ export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Pr
   const db = getDatabase(event)
   const sort = options.sort ?? 'newest'
   const status = options.status ?? 'active'
-  const cursor = decodeCursor(options.cursor, sort, options.tag, status)
+  const cursor = decodeCursor(options.cursor, sort, options.tag, status, options.domainId)
   let cursorCondition
   let order
 
@@ -363,14 +368,15 @@ export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Pr
   }
 
   const tagCondition = exactTagCondition(db, options.tag)
-  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, cursorCondition, orgCondition(event))).orderBy(...order).limit(options.limit + 1)
+  const domainCondition = options.domainId ? eq(links.customDomainId, options.domainId) : undefined
+  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, domainCondition, cursorCondition, orgCondition(event))).orderBy(...order).limit(options.limit + 1)
   const hasMore = rows.length > options.limit
   const page = hasMore ? rows.slice(0, options.limit) : rows
   const last = page.at(-1)
   return {
     links: await rowsToLinks(event, page),
     list_complete: !hasMore,
-    cursor: hasMore && last ? encodeCursor({ sort, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status }) : undefined,
+    cursor: hasMore && last ? encodeCursor({ sort, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status, domainId: options.domainId }) : undefined,
   }
 }
 
@@ -407,6 +413,8 @@ export async function* d1IterateAllLinks(env: Cloudflare.Env): AsyncIterable<Lin
 function linkFilterCondition(event: H3Event, db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
   const status = options.status ?? 'active'
   const conditions = [statusCondition(status), orgCondition(event)]
+  if (options.domainId)
+    conditions.push(eq(links.customDomainId, options.domainId))
   if (options.tag)
     conditions.push(exactTagCondition(db, options.tag))
   if (options.url)
@@ -441,10 +449,21 @@ export async function d1CountLinks(event: H3Event, options: LinkFilterOptions): 
 }
 
 export async function d1ListTags(event: H3Event): Promise<{ name: string, count: number }[]> {
-  return await getDatabase(event)
+  const db = getDatabase(event)
+  const orgId = event.context.organizationId
+
+  let query = db
     .select({ name: tags.name, count: count(linkTags.linkSlug) })
     .from(tags)
     .innerJoin(linkTags, eq(linkTags.tagName, tags.name))
+    .$dynamic()
+
+  if (orgId) {
+    query = query
+      .innerJoin(links, and(eq(linkTags.linkSlug, links.slug), eq(links.organizationId, orgId)))
+  }
+
+  return await query
     .groupBy(tags.name)
     .orderBy(asc(tags.name))
 }

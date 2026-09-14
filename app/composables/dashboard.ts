@@ -1,5 +1,18 @@
 import type { Component } from 'vue'
-import { Activity, ChartArea, FolderSync, Link, ScanSearch } from '@lucide/vue'
+import {
+  Activity,
+  ChartArea,
+  CreditCard,
+  FolderSync,
+  Globe,
+  Key,
+  Link,
+  ScanSearch,
+  ScrollText,
+  User,
+  Users,
+  Webhook,
+} from '@lucide/vue'
 import { computed } from 'vue'
 import { useRoute } from '#imports'
 
@@ -39,6 +52,41 @@ export const DASHBOARD_ROUTES = {
     paths: ['/dashboard/migrate'],
     titleKey: 'nav.migrate',
     icon: FolderSync,
+  },
+  profile: {
+    paths: ['/dashboard/settings/profile'],
+    titleKey: 'nav.profile',
+    icon: User,
+  },
+  team: {
+    paths: ['/dashboard/settings/team'],
+    titleKey: 'nav.team',
+    icon: Users,
+  },
+  domains: {
+    paths: ['/dashboard/settings/domains'],
+    titleKey: 'nav.domains',
+    icon: Globe,
+  },
+  apiKeys: {
+    paths: ['/dashboard/settings/api-keys'],
+    titleKey: 'nav.api_keys',
+    icon: Key,
+  },
+  webhooks: {
+    paths: ['/dashboard/settings/webhooks'],
+    titleKey: 'nav.webhooks',
+    icon: Webhook,
+  },
+  auditLogs: {
+    paths: ['/dashboard/settings/audit-logs'],
+    titleKey: 'nav.audit_logs',
+    icon: ScrollText,
+  },
+  billing: {
+    paths: ['/dashboard/settings/billing'],
+    titleKey: 'nav.billing',
+    icon: CreditCard,
   },
 } as const satisfies Record<string, DashboardRouteConfig>
 

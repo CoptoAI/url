@@ -2,7 +2,7 @@ import { customAlphabet } from 'nanoid'
 import { z } from 'zod'
 import { LINK_PASSWORD_MASK_PREFIX } from '../utils/link-password'
 
-const { slugRegex } = useAppConfig()
+const { slugRegex, reserveSlug = [] } = useAppConfig()
 
 const slugDefaultLength = +useRuntimeConfig().public.slugDefaultLength
 
@@ -35,7 +35,7 @@ export const EditLinkPasswordSchema = z.string().trim().max(128).refine(
 
 const IdSchema = z.string().trim().min(1).max(26)
 export const UrlSchema = z.string().trim().url().max(2048)
-export const SlugSchema = z.string().trim().max(2048).regex(new RegExp(slugRegex))
+export const SlugSchema = z.string().trim().max(2048).regex(new RegExp(slugRegex)).refine(slug => !reserveSlug.includes(slug.toLowerCase()), 'This slug is reserved for marketing or system pages')
 const TimestampSchema = z.number().int().safe()
 const ExpirationSchema = TimestampSchema.refine(expiration => expiration > Math.floor(Date.now() / 1000), {
   message: 'expiration must be greater than current time',
@@ -45,6 +45,8 @@ const ExpirationSchema = TimestampSchema.refine(expiration => expiration > Math.
 const LinkFieldsSchema = z.object({
   url: UrlSchema,
   slug: SlugSchema,
+  customDomainId: z.preprocess(val => val === '' || val === null ? undefined : val, z.string().trim().max(64).optional()),
+  customDomain: z.string().trim().optional(),
   comment: z.string().trim().max(2048).optional(),
   expiration: ExpirationSchema.optional(),
   title: z.string().trim().max(256).optional(),

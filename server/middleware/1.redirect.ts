@@ -1,5 +1,6 @@
 import type { Link } from '@/types'
 import { parsePath, withQuery } from 'ufo'
+import { lookupDomainConfig } from '../saas/domains/service'
 
 const SOCIAL_BOTS = [
   'applebot',
@@ -50,11 +51,65 @@ function hasOgConfig(link: Link): boolean {
 export default eventHandler(async (event) => {
   const { pathname: slug } = parsePath(event.path.replace(/^\/|\/$/g, ''))
   const { slugRegex, reserveSlug } = useAppConfig()
-  const { homeURL, linkCacheTtl, caseSensitive, redirectWithQuery, redirectStatusCode, redirectNoStore } = useRuntimeConfig(event)
+  const {
+    homeURL,
+    linkCacheTtl,
+    caseSensitive,
+    redirectWithQuery,
+    redirectStatusCode,
+    redirectNoStore,
+    mainDomain,
+    dashboardDomain,
+  } = useRuntimeConfig(event)
   const { cloudflare } = event.context
 
-  if (event.path === '/' && homeURL)
-    return sendRedirect(event, homeURL)
+  const requestHost = getRequestHost(event, { xForwardedHost: true }).split(':')[0]!.toLowerCase()
+  const normalizedMainDomain = ((mainDomain as string) || 'shaf.is').toLowerCase()
+  const normalizedDashboardDomain = ((dashboardDomain as string) || 'app.shaf.is').toLowerCase()
+
+  // 1. App dashboard subdomain routing (e.g. app.shaf.is)
+  if (normalizedDashboardDomain && requestHost === normalizedDashboardDomain) {
+    if (event.path === '/') {
+      return sendRedirect(event, '/dashboard', 302)
+    }
+  }
+
+  // 2. Main marketing domain routing (e.g. shaf.is or www.shaf.is)
+  if (
+    normalizedDashboardDomain
+    && normalizedDashboardDomain !== requestHost
+    && (requestHost === normalizedMainDomain || requestHost === `www.${normalizedMainDomain}`)
+  ) {
+    if (
+      event.path.startsWith('/dashboard')
+      || event.path.startsWith('/auth')
+      || event.path === '/onboarding'
+    ) {
+      return sendRedirect(event, `https://${normalizedDashboardDomain}${event.path}`, 302)
+    }
+  }
+
+  let customDomainConfig: Awaited<ReturnType<typeof lookupDomainConfig>> = null
+  if (cloudflare) {
+    try {
+      customDomainConfig = await lookupDomainConfig(event, requestHost)
+    }
+    catch {
+      // Non-blocking fallback
+    }
+  }
+
+  if (event.path === '/') {
+    if (customDomainConfig?.rootRedirectUrl) {
+      return sendRedirect(event, customDomainConfig.rootRedirectUrl)
+    }
+    if (customDomainConfig && !customDomainConfig.rootRedirectUrl) {
+      return sendRedirect(event, `https://${normalizedMainDomain}`, 302)
+    }
+    if (homeURL) {
+      return sendRedirect(event, homeURL)
+    }
+  }
 
   const { notFoundRedirect } = useRuntimeConfig(event)
   // Bypass redirect check for notFoundRedirect path to prevent infinite loop
@@ -62,7 +117,7 @@ export default eventHandler(async (event) => {
     return
   }
 
-  if (slug && !reserveSlug.includes(slug) && slugRegex.test(slug) && cloudflare) {
+  if (slug && !reserveSlug.includes(slug.toLowerCase()) && slugRegex.test(slug) && cloudflare) {
     let link: Link | null = null
 
     const lowerCaseSlug = slug.toLowerCase()
@@ -71,6 +126,17 @@ export default eventHandler(async (event) => {
     if (!caseSensitive && !link && lowerCaseSlug !== slug) {
       console.log('original slug fallback:', `slug:${slug} lowerCaseSlug:${lowerCaseSlug}`)
       link = await getLink(event, slug, linkCacheTtl)
+    }
+
+    // If request arrived via a custom domain, ensure link belongs to this custom domain or its organization
+    if (link && customDomainConfig) {
+      if (link.customDomainId && link.customDomainId !== customDomainConfig.domainId) {
+        link = null
+      }
+    }
+    // If request arrived via primary domain, but the link is explicitly tied to a custom domain
+    else if (link && !customDomainConfig && link.customDomainId) {
+      // Link is attached to a custom domain
     }
 
     if (link) {
@@ -194,6 +260,10 @@ export default eventHandler(async (event) => {
       return sendRedirect(event, finalTargetUrl, +redirectStatusCode)
     }
     else {
+      if (customDomainConfig?.notFoundRedirectUrl) {
+        return sendRedirect(event, customDomainConfig.notFoundRedirectUrl, 302)
+      }
+
       if (notFoundRedirect) {
         return sendRedirect(event, notFoundRedirect, 302)
       }

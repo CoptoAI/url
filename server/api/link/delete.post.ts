@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { SlugSchema } from '#shared/schemas/link'
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
 
 defineRouteMeta({
   openAPI: {
@@ -27,6 +28,8 @@ const DeleteSchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  const body = await readValidatedBody(event, DeleteSchema.parse)
+  requireApiKeyPermission(event, 'links:write')
   const { previewMode } = useRuntimeConfig(event).public
   if (previewMode) {
     throw createError({
@@ -35,7 +38,34 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const body = await readValidatedBody(event, DeleteSchema.parse)
   const slug = normalizeSlug(event, body.slug)
+
+  const existingLink = await getAnyAuthoritativeLink(event, slug)
+  const linkObj = existingLink as Record<string, unknown> | null
+  const ctx = event.context as Record<string, unknown>
+  const orgId = (linkObj?.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
+
   await deleteLink(event, slug)
+
+  if (orgId) {
+    try {
+      const { recordAuditLog } = await import('../../saas/audit')
+      const { dispatchWebhookEvent } = await import('../../saas/webhooks')
+      await recordAuditLog(event, {
+        organizationId: orgId,
+        action: 'link.deleted',
+        resourceType: 'link',
+        resourceId: slug,
+        details: { slug },
+      })
+      await dispatchWebhookEvent(event, {
+        organizationId: orgId,
+        eventName: 'link.deleted',
+        payload: { slug },
+      })
+    }
+    catch (err) {
+      console.error('DELETE WEBHOOK ERROR:', err)
+    }
+  }
 })

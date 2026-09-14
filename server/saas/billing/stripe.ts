@@ -93,3 +93,52 @@ export async function createStripePortalSession(
 
   return { url: portal.url }
 }
+
+export async function verifyStripeWebhookSignature(
+  rawBody: string,
+  signatureHeader: string | undefined,
+  secret: string,
+  toleranceSeconds = 300,
+): Promise<boolean> {
+  if (!signatureHeader || !secret)
+    return false
+
+  const parts = signatureHeader.split(',')
+  let timestamp: string | undefined
+  const signatures: string[] = []
+
+  for (const part of parts) {
+    const [key, value] = part.trim().split('=')
+    if (key === 't')
+      timestamp = value
+    else if (key === 'v1' && value)
+      signatures.push(value)
+  }
+
+  if (!timestamp || !signatures.length)
+    return false
+
+  const timestampNum = Number.parseInt(timestamp, 10)
+  if (Number.isNaN(timestampNum))
+    return false
+
+  const now = Math.floor(Date.now() / 1000)
+  if (toleranceSeconds > 0 && Math.abs(now - timestampNum) > toleranceSeconds)
+    return false
+
+  const payload = `${timestamp}.${rawBody}`
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
+  const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+
+  return signatures.includes(expectedSignature)
+}

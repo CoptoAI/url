@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
+
 defineRouteMeta({
   openAPI: {
     description: 'List all short links with pagination',
@@ -40,6 +42,13 @@ defineRouteMeta({
         schema: { type: 'string', enum: ['active', 'expired', 'all'], default: 'active' },
         description: 'Expiration status filter',
       },
+      {
+        name: 'domainId',
+        in: 'query',
+        required: false,
+        schema: { type: 'string' },
+        description: 'Filter links by custom domain ID',
+      },
     ],
   },
 })
@@ -50,12 +59,14 @@ const ListQuerySchema = z.object({
   sort: z.enum(['az', 'za', 'newest', 'oldest']).default('newest'),
   tag: z.string().trim().toLowerCase().min(1).max(32).optional(),
   status: z.enum(['active', 'expired', 'all']).default('active'),
+  domainId: z.string().trim().optional(),
 })
 
 export default eventHandler(async (event) => {
-  const { limit, cursor, sort, tag, status } = await getValidatedQuery(event, ListQuerySchema.parse)
+  requireApiKeyPermission(event, 'links:read')
+  const { limit, cursor, sort, tag, status, domainId } = await getValidatedQuery(event, ListQuerySchema.parse)
 
-  const list = await listLinks(event, { limit, cursor, sort, tag, status })
+  const list = await listLinks(event, { limit, cursor, sort, tag, status, domainId })
   return {
     ...list,
     links: sanitizeLinksPassword(list.links),

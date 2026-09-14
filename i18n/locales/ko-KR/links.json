@@ -53,6 +53,7 @@
     "form": {
       "url": "URL",
       "slug": "슬러그",
+      "domain": "도메인",
       "comment": "설명",
       "tags": "태그",
       "tags_description": "태그는 최대 10개, 각 32자까지 입력할 수 있습니다.",

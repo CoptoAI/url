@@ -1,45 +1,11 @@
 <script setup lang="ts">
-import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck, User } from '@lucide/vue'
-import { toast } from 'vue-sonner'
+import { KeyRound, ShieldCheck, User } from '@lucide/vue'
 
-const { t } = useI18n()
-const { userID, userEmail, userName, authMethod, organizationId } = useAuthSession()
+definePageMeta({
+  layout: 'dashboard',
+})
 
-const name = shallowRef('')
-const isSavingName = shallowRef(false)
-const nameSaved = shallowRef(false)
-const nameError = shallowRef('')
-
-watch(userName, (val) => {
-  if (val)
-    name.value = val
-}, { immediate: true })
-
-async function handleUpdateName() {
-  if (!name.value.trim() || isSavingName.value)
-    return
-
-  nameError.value = ''
-  nameSaved.value = false
-  try {
-    isSavingName.value = true
-    await useAPI('/api/auth/profile', {
-      method: 'PATCH',
-      body: { name: name.value.trim() },
-    })
-    nameSaved.value = true
-    toast(t('profile.profile_updated'))
-    // Refresh session
-    await useAPI('/api/verify')
-  }
-  catch (err: any) {
-    nameError.value = err.data?.message || 'Failed to update name'
-    toast.error(nameError.value)
-  }
-  finally {
-    isSavingName.value = false
-  }
-}
+const { userID, authMethod, organizationId } = useAuthSession()
 </script>
 
 <template>
@@ -72,51 +38,9 @@ async function handleUpdateName() {
             Update your public display name and account details.
           </CardDescription>
         </CardHeader>
-        <CardContent class="space-y-4">
-          <Alert v-if="nameError" variant="destructive">
-            <AlertCircle class="size-4" />
-            <AlertTitle>{{ nameError }}</AlertTitle>
-          </Alert>
-
-          <Alert
-            v-if="nameSaved" class="border-primary/20 bg-primary/5 text-primary"
-          >
-            <CheckCircle2 class="size-4" />
-            <AlertTitle>{{ $t('profile.profile_updated') }}</AlertTitle>
-          </Alert>
-
-          <div class="space-y-1.5">
-            <Label for="profile-email">{{ $t('profile.email') }}</Label>
-            <Input
-              id="profile-email"
-              type="email"
-              :model-value="userEmail || ''"
-              disabled
-              class="bg-muted text-muted-foreground"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <Label for="profile-name">{{ $t('profile.name') }}</Label>
-            <Input
-              id="profile-name"
-              v-model="name"
-              type="text"
-              placeholder="Your name"
-              :disabled="isSavingName || authMethod === 'site-token'"
-            />
-          </div>
+        <CardContent>
+          <DashboardSaasProfileGeneralForm />
         </CardContent>
-        <CardFooter
-          v-if="authMethod !== 'site-token'" class="
-            flex justify-end border-t pt-4
-          "
-        >
-          <Button :disabled="isSavingName || !name.trim()" @click="handleUpdateName">
-            <Loader2 v-if="isSavingName" class="motion-safe:animate-spin" />
-            {{ $t('profile.update_profile') }}
-          </Button>
-        </CardFooter>
       </Card>
 
       <!-- Security & Password -->

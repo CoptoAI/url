@@ -5,8 +5,10 @@ export interface UserTokenPayload {
   userId: string
   email: string
   name: string
+  username?: string
   organizationId?: string
   role?: string
+  onboardingCompleted?: boolean
 }
 
 function getJwtSecret(event: H3Event): Uint8Array {
@@ -32,8 +34,10 @@ export async function verifySessionToken(event: H3Event, token: string): Promise
       userId: payload.userId as string,
       email: payload.email as string,
       name: payload.name as string,
+      username: payload.username as string | undefined,
       organizationId: payload.organizationId as string | undefined,
       role: payload.role as string | undefined,
+      onboardingCompleted: payload.onboardingCompleted as boolean | undefined,
     }
   }
   catch {

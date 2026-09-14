@@ -16,10 +16,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { getAuthToken } from '@/utils/auth-token'
 
 const mobileMenuOpen = shallowRef(false)
 const { title, documentation, telegram, twitter, github } = useAppConfig()
 const { rawStats } = useGithubStats()
+const hasToken = shallowRef(false)
+
+onMounted(() => {
+  hasToken.value = !!getAuthToken()
+})
 
 function closeMobileMenu() {
   mobileMenuOpen.value = false
@@ -122,6 +128,11 @@ function closeMobileMenu() {
                   <NumberFlow class="tabular-nums" :value="rawStats.stars" />
                 </a>
               </Button>
+              <Button as-child size="sm">
+                <NuxtLink :to="hasToken ? '/dashboard' : '/auth/login'">
+                  {{ hasToken ? $t('dashboard.title') : $t('login.sign_in') }}
+                </NuxtLink>
+              </Button>
               <SwitchLanguage />
               <SwitchTheme />
             </div>
@@ -202,6 +213,11 @@ function closeMobileMenu() {
                   </nav>
 
                   <div class="mt-auto flex flex-col items-stretch gap-4">
+                    <Button as-child class="w-full">
+                      <NuxtLink :to="hasToken ? '/dashboard' : '/auth/login'" @click="closeMobileMenu">
+                        {{ hasToken ? $t('dashboard.title') : $t('login.sign_in') }}
+                      </NuxtLink>
+                    </Button>
                     <Button as-child variant="outline">
                       <a
                         :href="github"

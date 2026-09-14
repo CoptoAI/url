@@ -20,6 +20,17 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     siteToken: process.env.NUXT_SITE_TOKEN || randomBytes(32).toString('base64url'),
+    googleClientId: process.env.NUXT_GOOGLE_CLIENT_ID || '',
+    googleClientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET || '',
+    stripeSecretKey: process.env.NUXT_STRIPE_SECRET_KEY || '',
+    stripeWebhookSecret: process.env.NUXT_STRIPE_WEBHOOK_SECRET || '',
+    stripePriceIdStarter: process.env.NUXT_STRIPE_PRICE_ID_STARTER || '',
+    stripePriceIdPro: process.env.NUXT_STRIPE_PRICE_ID_PRO || '',
+    stripePriceIdEnterprise: process.env.NUXT_STRIPE_PRICE_ID_ENTERPRISE || '',
+    mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.is',
+    dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'app.shaf.is',
+    cfZoneId: process.env.NUXT_CF_ZONE_ID || '',
+    cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
     cfAccessTeamDomain: '',
     cfAccessAud: '',
     redirectStatusCode: '301',
@@ -27,9 +38,9 @@ export default defineNuxtConfig({
     redirectWithQuery: false,
     redirectNoStore: false,
     homeURL: '',
-    cfAccountId: '',
-    cfApiToken: '',
-    dataset: 'sink',
+    cfAccountId: process.env.NUXT_CF_ACCOUNT_ID || '',
+    cfApiToken: process.env.NUXT_CF_API_TOKEN || '',
+    dataset: process.env.NUXT_DATASET || 'shaf',
     aiModel: '@cf/qwen/qwen3-30b-a3b-fp8',
     aiPrompt: `You are a URL shortening assistant, please shorten the URL provided by the user into a SLUG. The SLUG information should be derived from the URL and page content (if provided). Do not make any assumptions beyond the given information. A SLUG is human-readable and should not exceed three words and can be validated using regular expressions {slugRegex} . Only the best one is returned, the format must be JSON reference {"slug": "example-slug"}`,
     aiOgPrompt: `You are an OpenGraph metadata assistant. Please summarize the page content provided by the user into a perfect title and description for an OpenGraph preview. Do not make any assumptions beyond the given information. Only the best one is returned, the format must be JSON reference {"title": "Example Title", "description": "Example description that summarizes the page accurately."}`,
@@ -43,6 +54,9 @@ export default defineNuxtConfig({
     webhookUrl: '',
     webhookSecret: '',
     public: {
+      mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.is',
+      dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'app.shaf.is',
+      cfFallbackOrigin: process.env.NUXT_CF_FALLBACK_ORIGIN || 'cname.shaf.is',
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',
@@ -84,12 +98,11 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true,
     },
-    timing: true,
     openAPI: {
       production: 'runtime',
       meta: {
-        title: 'Sink API',
-        description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.\n\n[Return to this Sink instance](/) · [Read the documentation](https://docs.sink.cool)',
+        title: 'Shaf API',
+        description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.\n\n[Return to Shaf](/) · [Read the documentation](https://docs.sink.cool)',
       },
       route: '/_docs/openapi.json',
       ui: {
@@ -103,6 +116,9 @@ export default defineNuxtConfig({
     },
   },
   vite: {
+    server: {
+      allowedHosts: true,
+    },
     plugins: [
       tailwindcss(),
     ],

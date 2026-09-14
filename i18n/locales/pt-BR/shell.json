@@ -29,7 +29,14 @@
     "analysis": "Análise",
     "realtime": "Tempo Real",
     "check": "Check",
-    "migrate": "Importar/Exportar"
+    "migrate": "Importar/Exportar",
+    "profile": "Perfil da conta",
+    "team": "Membros da equipe",
+    "domains": "Domínios personalizados",
+    "api_keys": "Chaves de API",
+    "webhooks": "Webhooks",
+    "audit_logs": "Logs de auditoria",
+    "billing": "Faturamento e planos"
   },
   "sidebar": {
     "subtitle": "Encurtador de links",

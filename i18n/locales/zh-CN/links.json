@@ -53,6 +53,7 @@
     "form": {
       "url": "链接地址",
       "slug": "短链",
+      "domain": "域名",
       "comment": "备注",
       "tags": "标签",
       "tags_description": "最多 10 个标签，每项不超过 32 个字符。",

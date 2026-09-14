@@ -29,7 +29,14 @@
     "analysis": "分析",
     "realtime": "即時",
     "check": "檢查",
-    "migrate": "匯入/匯出"
+    "migrate": "匯入/匯出",
+    "profile": "個人資料",
+    "team": "團隊成員",
+    "domains": "自訂網域",
+    "api_keys": "API 金鑰",
+    "webhooks": "Webhook",
+    "audit_logs": "審計日誌",
+    "billing": "帳單與方案"
   },
   "sidebar": {
     "subtitle": "縮網址服務",

@@ -79,6 +79,15 @@ export async function getOrganizationMembers(event: H3Event, orgId: string) {
   return rows
 }
 
+export async function isUserOrganizationMember(event: H3Event, orgId: string, userId: string): Promise<boolean> {
+  const db = getD1Database(event)
+  const [member] = await db.select({ role: organizationMembers.role })
+    .from(organizationMembers)
+    .where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, userId)))
+    .limit(1)
+  return !!member
+}
+
 export async function requireOrganizationMember(event: H3Event, orgId: string, userId: string, allowedRoles: OrganizationRole[] = ['owner', 'admin', 'member', 'viewer']) {
   const db = getD1Database(event)
   const [member] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, userId)))
@@ -110,6 +119,18 @@ export async function inviteMember(event: H3Event, orgId: string, invitedByUserI
     createdAt: now,
   }).returning()
 
+  try {
+    const { dispatchWebhookEvent } = await import('../webhooks')
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'member.invited',
+      payload: { email: email.toLowerCase(), role, invitedBy: invitedByUserId },
+    })
+  }
+  catch {
+    // Non-blocking
+  }
+
   return invite!
 }
 
@@ -117,6 +138,18 @@ export async function removeMember(event: H3Event, orgId: string, userIdToRemove
   const db = getD1Database(event)
   await db.delete(organizationMembers)
     .where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, userIdToRemove)))
+
+  try {
+    const { dispatchWebhookEvent } = await import('../webhooks')
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'member.removed',
+      payload: { userId: userIdToRemove },
+    })
+  }
+  catch {
+    // Non-blocking
+  }
 }
 
 export async function updateMemberRole(event: H3Event, orgId: string, userIdToUpdate: string, newRole: OrganizationRole) {

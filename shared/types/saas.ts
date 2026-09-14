@@ -1,11 +1,25 @@
 import type { CustomDomainStatus, OrganizationRole, SubscriptionPlan } from '../schemas/saas'
 
+export interface User {
+  id: string
+  email: string
+  name: string
+  username?: string | null
+  avatarUrl?: string | null
+  emailVerified: boolean
+  onboardingCompleted: boolean
+  role: 'user' | 'admin'
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Organization {
   id: string
   name: string
   slug: string
   logo?: string | null
   plan: SubscriptionPlan
+  allowedDomains?: readonly string[] | string[] | null
   subscriptionStatus?: string | null
   linksQuota: number
   clicksQuotaMonthly: number
@@ -51,6 +65,8 @@ export interface CustomDomain {
     txtRecordName?: string
     txtRecordValue?: string
   } | null
+  rootRedirectUrl?: string | null
+  notFoundRedirectUrl?: string | null
   createdAt: number
   updatedAt: number
 }

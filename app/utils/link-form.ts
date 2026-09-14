@@ -6,6 +6,8 @@ export function createLinkFormInitialValues(link: Partial<DashboardLink>): Dashb
   return {
     url: link.url ?? '',
     slug: link.slug ?? '',
+    customDomainId: link.customDomainId ?? '',
+    customDomain: link.customDomain ?? '',
     comment: link.comment ?? '',
     tags: link.tags ?? [],
     expiration: link.expiration ? unix2date(link.expiration) : undefined,
@@ -38,6 +40,7 @@ export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isE
   return {
     url: value.url,
     slug: value.slug,
+    customDomainId: value.customDomainId || undefined,
     comment: value.comment || undefined,
     tags: value.tags,
     expiration: value.expiration ? date2unix(value.expiration, 'end') : undefined,

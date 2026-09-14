@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, History, Plus, Send, Trash2 } from '@lucide/vue'
+import { Copy, History, Plus, RefreshCw, RotateCw, Send, Trash2 } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 
 definePageMeta({
@@ -84,19 +84,34 @@ function copySecret() {
   }
 }
 
-async function deleteWebhook(id: string) {
-  if (!activeOrganization.value?.id)
+const webhookToDelete = shallowRef<WebhookItem | null>(null)
+const deleteConfirmOpen = shallowRef(false)
+const isDeleting = shallowRef(false)
+
+function confirmDeleteWebhook(webhook: WebhookItem) {
+  webhookToDelete.value = webhook
+  deleteConfirmOpen.value = true
+}
+
+async function handleConfirmDelete() {
+  if (!activeOrganization.value?.id || !webhookToDelete.value || isDeleting.value)
     return
 
+  isDeleting.value = true
   try {
-    await useAPI(`/api/organizations/${activeOrganization.value.id}/webhooks/${id}`, {
+    await useAPI(`/api/organizations/${activeOrganization.value.id}/webhooks/${webhookToDelete.value.id}`, {
       method: 'DELETE',
     })
-    toast('Webhook deleted')
+    toast('Webhook deleted successfully')
+    deleteConfirmOpen.value = false
+    webhookToDelete.value = null
     await fetchWebhooks()
   }
   catch (err: unknown) {
     toast.error(err instanceof Error ? err.message : 'Failed to delete webhook')
+  }
+  finally {
+    isDeleting.value = false
   }
 }
 
@@ -139,6 +154,34 @@ async function viewDeliveries(webhook: WebhookItem) {
   }
   catch (err) {
     console.error('Failed to fetch deliveries:', err)
+  }
+}
+
+const retryingDelivery = shallowRef<Record<string, boolean>>({})
+
+async function retryDelivery(deliveryId: string) {
+  if (!activeOrganization.value?.id || !activeWebhookForDeliveries.value?.id)
+    return
+
+  retryingDelivery.value = { ...retryingDelivery.value, [deliveryId]: true }
+  try {
+    const res = await useAPI<{ success: boolean, statusCode: number }>(
+      `/api/organizations/${activeOrganization.value.id}/webhooks/${activeWebhookForDeliveries.value.id}/deliveries/${deliveryId}/retry`,
+      { method: 'POST' },
+    )
+    if (res?.success) {
+      toast.success('Webhook redelivered successfully')
+    }
+    else {
+      toast.error(`Redelivery responded with HTTP ${res?.statusCode || 500}`)
+    }
+    await viewDeliveries(activeWebhookForDeliveries.value)
+  }
+  catch (err: unknown) {
+    toast.error(err instanceof Error ? err.message : 'Failed to redeliver webhook')
+  }
+  finally {
+    retryingDelivery.value = { ...retryingDelivery.value, [deliveryId]: false }
   }
 }
 </script>
@@ -244,7 +287,7 @@ async function viewDeliveries(webhook: WebhookItem) {
                     text-destructive
                     hover:text-destructive
                   "
-                  @click="deleteWebhook(wh.id)"
+                  @click="confirmDeleteWebhook(wh)"
                 >
                   <Trash2 class="size-3.5" />
                 </Button>
@@ -320,12 +363,61 @@ async function viewDeliveries(webhook: WebhookItem) {
             </Badge>
             <span class="font-mono font-medium">{{ del.event }}</span>
           </div>
-          <div class="flex items-center gap-3 text-muted-foreground">
+          <div class="flex items-center gap-2 text-muted-foreground">
             <span>{{ del.durationMs }}ms</span>
             <span>{{ new Date(del.createdAt * 1000).toLocaleTimeString() }}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              class="h-6 px-2 text-[11px]"
+              :disabled="retryingDelivery[del.id]"
+              @click="retryDelivery(del.id)"
+            >
+              <RefreshCw
+                v-if="retryingDelivery[del.id]" class="
+                  mr-1 size-2.5
+                  motion-safe:animate-spin
+                "
+              />
+              <RotateCw v-else class="mr-1 size-2.5" />
+              Retry
+            </Button>
           </div>
         </div>
       </div>
     </ResponsiveModal>
+
+    <!-- Delete Webhook Confirmation Dialog -->
+    <AlertDialog :open="deleteConfirmOpen" @update:open="deleteConfirmOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete webhook?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete the webhook for <strong
+              class="font-mono text-xs text-foreground"
+            >{{ webhookToDelete?.url }}</strong>? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="isDeleting">
+            {{ $t('common.cancel') }}
+          </AlertDialogCancel>
+          <Button
+            variant="destructive"
+            :disabled="isDeleting"
+            :aria-busy="isDeleting"
+            @click.prevent="handleConfirmDelete"
+          >
+            <Loader2
+              v-if="isDeleting" class="
+                mr-1.5 size-4
+                motion-safe:animate-spin
+              "
+            />
+            Delete Webhook
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

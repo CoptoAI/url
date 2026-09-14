@@ -53,6 +53,7 @@
     "form": {
       "url": "URL",
       "slug": "Slug",
+      "domain": "Domain",
       "comment": "Catatan",
       "tags": "Tag",
       "tags_description": "Maksimal 10 tag, masing-masing 32 karakter.",

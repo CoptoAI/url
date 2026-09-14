@@ -27,28 +27,31 @@ const form = useForm({
       isSubmitting.value = true
       const response = await $fetch<{
         token: string
-        user: { id: string, email: string, name: string }
-        activeOrganization: { id: string, name: string, slug: string }
+        user: { id: string, email: string, name: string, onboardingCompleted?: boolean }
+        activeOrganization?: { id: string, name: string, slug: string }
       }>('/api/auth/register', {
         method: 'POST',
         body: {
           name: value.name,
           email: value.email,
           password: value.password,
-          organizationName: value.workspaceName || `${value.name}'s Workspace`,
+          ...(value.workspaceName?.trim() ? { organizationName: value.workspaceName.trim() } : {}),
         },
       })
 
       if (response.token) {
         setAuthToken(response.token)
         if (response.activeOrganization?.id) {
-          localStorage.setItem('sink_saas_org_id', response.activeOrganization.id)
+          setActiveOrganizationId(response.activeOrganization.id)
         }
-        // Flag for first-time onboarding modal
-        localStorage.setItem('sink_show_onboarding', 'true')
         await useAPI('/api/verify')
         emit('success')
-        await navigateTo('/dashboard')
+        if (response.user.onboardingCompleted) {
+          await navigateTo('/dashboard')
+        }
+        else {
+          await navigateTo('/onboarding')
+        }
       }
     }
     catch (err: any) {

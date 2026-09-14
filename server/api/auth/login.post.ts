@@ -38,8 +38,10 @@ export default eventHandler(async (event) => {
     userId: user.id,
     email: user.email,
     name: user.name,
+    username: user.username || undefined,
     organizationId: primaryOrg?.id,
     role: primaryOrg?.role,
+    onboardingCompleted: user.onboardingCompleted,
   })
 
   return {
@@ -48,7 +50,9 @@ export default eventHandler(async (event) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      username: user.username,
       avatarUrl: user.avatarUrl,
+      onboardingCompleted: user.onboardingCompleted,
     },
     organizations: userOrgs,
     activeOrganization: primaryOrg || null,

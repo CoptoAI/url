@@ -44,6 +44,18 @@ export async function createApiKey(
     createdAt: now,
   })
 
+  try {
+    const { dispatchWebhookEvent } = await import('../webhooks')
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'api_key.created',
+      payload: { id, name, keyPrefix, permissions, expiresAt },
+    })
+  }
+  catch {
+    // Non-blocking
+  }
+
   return {
     id,
     organizationId: orgId,
@@ -53,6 +65,20 @@ export async function createApiKey(
     expiresAt,
     createdAt: now,
     secretKey: rawSecret,
+  }
+}
+
+export function requireApiKeyPermission(event: H3Event, permission: string): void {
+  if (event.context.authMethod !== 'api-key') {
+    return
+  }
+
+  const permissions = (event.context.permissions as string[]) || []
+  if (!permissions.includes('*') && !permissions.includes(permission)) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: `Forbidden: API key lacks required permission '${permission}'`,
+    })
   }
 }
 
@@ -110,5 +136,21 @@ export async function listApiKeys(event: H3Event, orgId: string) {
 
 export async function deleteApiKey(event: H3Event, orgId: string, keyId: string) {
   const db = getD1Database(event)
+  const [found] = await db.select().from(apiKeys).where(and(eq(apiKeys.organizationId, orgId), eq(apiKeys.id, keyId)))
+  if (!found)
+    return
+
   await db.delete(apiKeys).where(and(eq(apiKeys.organizationId, orgId), eq(apiKeys.id, keyId)))
+
+  try {
+    const { dispatchWebhookEvent } = await import('../webhooks')
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'api_key.revoked',
+      payload: { id: keyId, name: found.name, keyPrefix: found.keyPrefix },
+    })
+  }
+  catch {
+    // Non-blocking
+  }
 }

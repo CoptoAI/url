@@ -29,7 +29,14 @@
     "analysis": "分析",
     "realtime": "实时",
     "check": "检测",
-    "migrate": "导入/导出"
+    "migrate": "导入/导出",
+    "profile": "个人资料",
+    "team": "团队成员",
+    "domains": "自定义域名",
+    "api_keys": "API 密钥",
+    "webhooks": "网络钩子",
+    "audit_logs": "审计日志",
+    "billing": "账单与套餐"
   },
   "sidebar": {
     "subtitle": "短链接服务",

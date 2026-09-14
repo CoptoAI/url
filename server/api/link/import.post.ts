@@ -1,6 +1,7 @@
 import type { ImportResult } from '#shared/schemas/import'
 import { ImportDataSchema } from '#shared/schemas/import'
 import { nanoid } from '#shared/schemas/link'
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
 
 defineRouteMeta({
   openAPI: {
@@ -55,6 +56,7 @@ defineRouteMeta({
 
 export default eventHandler(async (event) => {
   const importData = await readValidatedBody(event, ImportDataSchema.parse)
+  requireApiKeyPermission(event, 'links:write')
   const { importRequestLimit } = useRuntimeConfig(event)
   if (importData.links.length > importRequestLimit) {
     throw createError({

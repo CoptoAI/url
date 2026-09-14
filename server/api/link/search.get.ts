@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
+
 defineRouteMeta({
   openAPI: {
     description: 'Search links with a non-empty keyword or exact URL. Tag and status only filter those searches; requests without a search selector return an empty array.',
@@ -55,6 +57,7 @@ const SearchQuerySchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  requireApiKeyPermission(event, 'links:read')
   const query = await getValidatedQuery(event, SearchQuerySchema.parse)
   if (!query.q && !query.url)
     return []

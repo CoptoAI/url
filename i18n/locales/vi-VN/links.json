@@ -53,6 +53,7 @@
     "form": {
       "url": "URL",
       "slug": "Slug",
+      "domain": "Tên miền",
       "comment": "Ghi chú",
       "tags": "Thẻ",
       "tags_description": "Tối đa 10 thẻ, mỗi thẻ 32 ký tự.",

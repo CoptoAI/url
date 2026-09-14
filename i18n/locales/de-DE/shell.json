@@ -29,7 +29,14 @@
     "analysis": "Analyse",
     "realtime": "Echtzeit",
     "check": "Check",
-    "migrate": "Import/Export"
+    "migrate": "Import/Export",
+    "profile": "Kontoprofil",
+    "team": "Teammitglieder",
+    "domains": "Eigene Domains",
+    "api_keys": "API-Schlüssel",
+    "webhooks": "Webhooks",
+    "audit_logs": "Audit-Protokolle",
+    "billing": "Abrechnung & Tarife"
   },
   "sidebar": {
     "subtitle": "Link-Verkürzer",

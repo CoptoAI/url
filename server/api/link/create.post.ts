@@ -1,4 +1,5 @@
 import { CreateLinkSchema } from '#shared/schemas/link'
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
 
 defineRouteMeta({
   openAPI: {
@@ -48,6 +49,25 @@ defineRouteMeta({
 
 export default eventHandler(async (event) => {
   const link = await readValidatedBody(event, CreateLinkSchema.parse)
+  requireApiKeyPermission(event, 'links:write')
+
+  if (link.customDomainId) {
+    const { customDomains } = await import('../../database/schema')
+    const { getD1Database } = await import('../../services/link-store/d1')
+    const { and, eq } = await import('drizzle-orm')
+    const db = getD1Database(event)
+    const [domain] = await db.select().from(customDomains).where(
+      event.context.organizationId
+        ? and(eq(customDomains.id, link.customDomainId), eq(customDomains.organizationId, event.context.organizationId))
+        : eq(customDomains.id, link.customDomainId),
+    )
+    if (!domain || domain.status !== 'active') {
+      throw createError({
+        status: 400,
+        statusText: 'Custom domain is invalid or not active',
+      })
+    }
+  }
 
   await prepareIncomingLink(event, link)
 

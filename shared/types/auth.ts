@@ -7,6 +7,9 @@ export interface VerifyResponse {
   userID: string
   userEmail?: string
   userName?: string
+  username?: string
+  avatarUrl?: string
   organizationId?: string
+  onboardingCompleted?: boolean
   accessEnabled: boolean
 }

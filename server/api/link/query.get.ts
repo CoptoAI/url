@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
+
 defineRouteMeta({
   openAPI: {
     description: 'Query a short link by slug',
@@ -21,6 +23,7 @@ const QueryParamsSchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  requireApiKeyPermission(event, 'links:read')
   const query = await getValidatedQuery(event, QueryParamsSchema.parse)
   const slug = normalizeSlug(event, query.slug)
 

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { CreditCard, Globe, Key, ScrollText, User, Users, Webhook } from '@lucide/vue'
-
 interface NavItem {
   title: string
   url: string
@@ -9,7 +7,6 @@ interface NavItem {
 }
 
 const { isActive } = useDashboardRoute()
-const route = useRoute()
 
 const platformItems = computed<NavItem[]>(() => [
   {
@@ -40,50 +37,50 @@ const platformItems = computed<NavItem[]>(() => [
 
 const settingsItems = computed<NavItem[]>(() => [
   {
-    title: 'Account Profile',
-    url: '/dashboard/settings/profile',
-    icon: User,
-    isActive: route.path === '/dashboard/settings/profile',
+    title: DASHBOARD_ROUTES.profile.titleKey,
+    url: DASHBOARD_ROUTES.profile.paths[0]!,
+    icon: DASHBOARD_ROUTES.profile.icon,
+    isActive: isActive('profile'),
   },
   {
-    title: 'Team Members',
-    url: '/dashboard/settings/team',
-    icon: Users,
-    isActive: route.path === '/dashboard/settings/team',
+    title: DASHBOARD_ROUTES.team.titleKey,
+    url: DASHBOARD_ROUTES.team.paths[0]!,
+    icon: DASHBOARD_ROUTES.team.icon,
+    isActive: isActive('team'),
   },
   {
-    title: 'Custom Domains',
-    url: '/dashboard/settings/domains',
-    icon: Globe,
-    isActive: route.path === '/dashboard/settings/domains',
+    title: DASHBOARD_ROUTES.domains.titleKey,
+    url: DASHBOARD_ROUTES.domains.paths[0]!,
+    icon: DASHBOARD_ROUTES.domains.icon,
+    isActive: isActive('domains'),
   },
   {
-    title: 'API Keys',
-    url: '/dashboard/settings/api-keys',
-    icon: Key,
-    isActive: route.path === '/dashboard/settings/api-keys',
+    title: DASHBOARD_ROUTES.apiKeys.titleKey,
+    url: DASHBOARD_ROUTES.apiKeys.paths[0]!,
+    icon: DASHBOARD_ROUTES.apiKeys.icon,
+    isActive: isActive('apiKeys'),
   },
   {
-    title: 'Webhooks',
-    url: '/dashboard/settings/webhooks',
-    icon: Webhook,
-    isActive: route.path === '/dashboard/settings/webhooks',
+    title: DASHBOARD_ROUTES.webhooks.titleKey,
+    url: DASHBOARD_ROUTES.webhooks.paths[0]!,
+    icon: DASHBOARD_ROUTES.webhooks.icon,
+    isActive: isActive('webhooks'),
   },
   {
-    title: 'Audit Logs',
-    url: '/dashboard/settings/audit-logs',
-    icon: ScrollText,
-    isActive: route.path === '/dashboard/settings/audit-logs',
+    title: DASHBOARD_ROUTES.auditLogs.titleKey,
+    url: DASHBOARD_ROUTES.auditLogs.paths[0]!,
+    icon: DASHBOARD_ROUTES.auditLogs.icon,
+    isActive: isActive('auditLogs'),
   },
   {
-    title: 'Billing & Plans',
-    url: '/dashboard/settings/billing',
-    icon: CreditCard,
-    isActive: route.path === '/dashboard/settings/billing',
+    title: DASHBOARD_ROUTES.billing.titleKey,
+    url: DASHBOARD_ROUTES.billing.paths[0]!,
+    icon: DASHBOARD_ROUTES.billing.icon,
+    isActive: isActive('billing'),
   },
   {
-    title: 'nav.migrate',
-    url: '/dashboard/migrate',
+    title: DASHBOARD_ROUTES.migrate.titleKey,
+    url: DASHBOARD_ROUTES.migrate.paths[0]!,
     icon: DASHBOARD_ROUTES.migrate.icon,
     isActive: isActive('migrate'),
   },

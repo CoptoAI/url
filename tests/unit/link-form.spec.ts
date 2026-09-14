@@ -21,6 +21,8 @@ describe('link form values', () => {
       title: '',
       description: '',
       image: '',
+      customDomainId: '',
+      customDomain: '',
       cloaking: false,
       redirectWithQuery: false,
       password: '',

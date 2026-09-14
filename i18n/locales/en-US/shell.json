@@ -29,7 +29,14 @@
     "analysis": "Analysis",
     "realtime": "Realtime",
     "check": "Check",
-    "migrate": "Import/Export"
+    "migrate": "Import/Export",
+    "profile": "Account Profile",
+    "team": "Team Members",
+    "domains": "Custom Domains",
+    "api_keys": "API Keys",
+    "webhooks": "Webhooks",
+    "audit_logs": "Audit Logs",
+    "billing": "Billing & Plans"
   },
   "sidebar": {
     "subtitle": "Link Shortener",

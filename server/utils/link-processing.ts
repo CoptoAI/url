@@ -14,6 +14,8 @@ const editableOptionalLinkFields = [
   'unsafe',
   'geo',
   'tags',
+  'customDomainId',
+  'customDomain',
 ] as const satisfies readonly (keyof Link)[]
 
 interface LinkResponse {
@@ -23,6 +25,13 @@ interface LinkResponse {
 
 export async function prepareIncomingLink(event: H3Event, link: Link): Promise<void> {
   link.slug = normalizeSlug(event, link.slug)
+  const { reserveSlug } = useAppConfig()
+  if (reserveSlug && reserveSlug.includes(link.slug.toLowerCase())) {
+    throw createError({
+      status: 400,
+      statusText: `The slug "${link.slug}" is reserved for system or marketing pages.`,
+    })
+  }
   await detectUnsafeLink(event, link)
 }
 

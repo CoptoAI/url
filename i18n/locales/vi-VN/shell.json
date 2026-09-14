@@ -29,7 +29,14 @@
     "analysis": "Phân tích",
     "realtime": "Thời gian thực",
     "check": "Check",
-    "migrate": "Nhập/Xuất"
+    "migrate": "Nhập/Xuất",
+    "profile": "Hồ sơ tài khoản",
+    "team": "Thành viên nhóm",
+    "domains": "Tên miền tùy chỉnh",
+    "api_keys": "Khóa API",
+    "webhooks": "Webhooks",
+    "audit_logs": "Nhật ký kiểm toán",
+    "billing": "Thanh toán & Gói"
   },
   "sidebar": {
     "subtitle": "Rút gọn liên kết",

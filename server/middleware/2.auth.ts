@@ -1,11 +1,15 @@
 import { timingSafeEqual } from 'node:crypto'
 import { verifyApiKey } from '../saas/api-keys/service'
 import { verifySessionToken } from '../saas/auth/jwt'
+import { isUserOrganizationMember } from '../saas/organizations/service'
 
 const PUBLIC_API_PREFIXES = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/google',
+  '/api/auth/check-username',
   '/api/auth/invite/',
+  '/api/organizations/check-slug',
   '/api/webhooks/',
 ]
 
@@ -17,12 +21,17 @@ export default eventHandler(async (event) => {
   if (PUBLIC_API_PREFIXES.some(prefix => event.path.startsWith(prefix)))
     return
 
+  const apiKeyHeader = getHeader(event, 'x-api-key')?.trim()
   const authHeader = getHeader(event, 'Authorization')
-  const token = authHeader?.replace(/^Bearer\s+/, '')
+  const token = apiKeyHeader || authHeader?.replace(/^Bearer\s+/, '')
 
   // 1. API Key Authentication (e.g. sk_live_...)
-  if (token?.startsWith('sk_live_')) {
-    const apiKeyData = await verifyApiKey(event, token)
+  const rawApiKey = (apiKeyHeader && apiKeyHeader.startsWith('sk_live_'))
+    ? apiKeyHeader
+    : (token?.startsWith('sk_live_') ? token : undefined)
+
+  if (rawApiKey) {
+    const apiKeyData = await verifyApiKey(event, rawApiKey)
     if (apiKeyData) {
       event.context.authMethod = 'api-key'
       event.context.userID = apiKeyData.userId
@@ -44,9 +53,18 @@ export default eventHandler(async (event) => {
       event.context.userID = session.userId
       event.context.userEmail = session.email
       event.context.userName = session.name
+      event.context.username = session.username
+      event.context.onboardingCompleted = session.onboardingCompleted ?? false
       // Support passing active organization via header or defaulting to token payload
-      const requestedOrgId = getHeader(event, 'x-organization-id') || session.organizationId
-      event.context.organizationId = requestedOrgId
+      const requestedOrgId = getHeader(event, 'x-organization-id')
+      let activeOrgId = session.organizationId
+      if (requestedOrgId && requestedOrgId !== session.organizationId) {
+        const isMember = await isUserOrganizationMember(event, requestedOrgId, session.userId)
+        if (isMember) {
+          activeOrgId = requestedOrgId
+        }
+      }
+      event.context.organizationId = activeOrgId
       return
     }
   }

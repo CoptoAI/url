@@ -22,6 +22,13 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const linksSearchStore = useDashboardLinksSearchStore()
 const requestUrl = useRequestURL()
+const { customDomains, fetchCustomDomains } = useSaaS()
+
+onMounted(() => {
+  fetchCustomDomains()
+})
+
+const activeCustomDomains = computed(() => (customDomains.value || []).filter(d => d.status === 'active'))
 
 const urlValidator = UrlSchema
 const slugValidator = SlugSchema
@@ -277,6 +284,42 @@ defineExpose({ initializeRandomSlug })
               v-if="isInvalid(field)"
               :errors="formatErrors(field.state.meta.errors)"
             />
+          </Field>
+        </form.Field>
+
+        <form.Field
+          v-if="activeCustomDomains.length > 0"
+          v-slot="{ field }"
+          name="customDomainId"
+        >
+          <Field>
+            <FieldLabel :for="`${formId}-${field.name}`">
+              {{ $t('links.form.domain') || 'Domain' }}
+            </FieldLabel>
+            <Select
+              :model-value="field.state.value || ''"
+              :disabled="isEdit"
+              @update:model-value="(val: any) => field.handleChange(String(val ?? ''))"
+            >
+              <SelectTrigger :id="`${formId}-${field.name}`">
+                <SelectValue placeholder="Default Domain" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">
+                  Default ({{ requestUrl.host }})
+                </SelectItem>
+                <SelectItem
+                  v-for="d in activeCustomDomains"
+                  :key="d.id"
+                  :value="d.id"
+                >
+                  {{ d.domain }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <FieldDescription>
+              Select the branded domain for this short link.
+            </FieldDescription>
           </Field>
         </form.Field>
 

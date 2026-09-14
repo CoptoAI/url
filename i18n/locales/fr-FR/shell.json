@@ -29,7 +29,14 @@
     "analysis": "Statistiques",
     "realtime": "Realtime",
     "check": "Check",
-    "migrate": "Import/Export"
+    "migrate": "Import/Export",
+    "profile": "Profil du compte",
+    "team": "Membres de l'équipe",
+    "domains": "Domaines personnalisés",
+    "api_keys": "Clés API",
+    "webhooks": "Webhooks",
+    "audit_logs": "Journaux d'audit",
+    "billing": "Facturation et forfaits"
   },
   "sidebar": {
     "subtitle": "Raccourcisseur de liens",

@@ -29,7 +29,14 @@
     "analysis": "Analisi",
     "realtime": "In Tempo Reale",
     "check": "Check",
-    "migrate": "Importa/Esporta"
+    "migrate": "Importa/Esporta",
+    "profile": "Profilo account",
+    "team": "Membri del team",
+    "domains": "Domini personalizzati",
+    "api_keys": "Chiavi API",
+    "webhooks": "Webhook",
+    "audit_logs": "Log di audit",
+    "billing": "Fatturazione e piani"
   },
   "sidebar": {
     "subtitle": "Accorcia i tuoi Link",

@@ -10,7 +10,7 @@ const outputPath = new URL('wrangler.deploy.jsonc', rootDir)
 
 const defaultName = z.preprocess(
   value => typeof value === 'string' && value.trim() === '' ? undefined : value,
-  z.string().trim().min(1).default('sink'),
+  z.string().trim().min(1).default('shaf'),
 )
 
 const optionalName = z.preprocess(
@@ -58,7 +58,11 @@ async function loadEnv() {
       throw error
   }
 
-  return deployEnvSchema.parse({ ...fileEnv, ...process.env })
+  const merged = { ...fileEnv, ...process.env }
+  return {
+    deployEnv: deployEnvSchema.parse(merged),
+    rawEnv: merged,
+  }
 }
 
 function getBinding(config, section, binding) {
@@ -84,7 +88,7 @@ if (parseErrors.length > 0) {
   throw new Error(`Failed to parse wrangler.jsonc: ${details}`)
 }
 
-const env = await loadEnv()
+const { deployEnv: env, rawEnv } = await loadEnv()
 
 if (env.DEPLOY_D1_DATABASE_ID.replace(/-/g, '') === env.DEPLOY_KV_NAMESPACE_ID.replace(/-/g, '')) {
   console.warn(
@@ -110,6 +114,22 @@ if (env.DEPLOY_R2_BUCKET_NAME) {
 }
 else {
   config.r2_buckets = config.r2_buckets.filter(({ binding }) => binding !== 'R2')
+}
+
+// Forward non-secret NUXT_* variables to Worker vars
+const secretKeys = new Set([
+  'NUXT_SITE_TOKEN',
+  'NUXT_CF_API_TOKEN',
+  'NUXT_GOOGLE_CLIENT_SECRET',
+  'NUXT_STRIPE_SECRET_KEY',
+  'NUXT_STRIPE_WEBHOOK_SECRET',
+])
+
+config.vars = config.vars || {}
+for (const [key, value] of Object.entries(rawEnv)) {
+  if (key.startsWith('NUXT_') && !secretKeys.has(key) && typeof value === 'string' && value.trim()) {
+    config.vars[key] = value.trim()
+  }
 }
 
 await writeFile(outputPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')

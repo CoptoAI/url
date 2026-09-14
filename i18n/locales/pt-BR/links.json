@@ -53,6 +53,7 @@
     "form": {
       "url": "URL",
       "slug": "Slug",
+      "domain": "Domínio",
       "comment": "Comentário",
       "tags": "Tags",
       "tags_description": "Até 10 tags, com 32 caracteres cada.",

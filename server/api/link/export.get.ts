@@ -1,5 +1,7 @@
 import type { ExportData, Link } from '#shared/schemas/link'
 
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
+
 defineRouteMeta({
   openAPI: {
     description: 'Export all links with pagination',
@@ -17,6 +19,7 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requireApiKeyPermission(event, 'links:read')
   const query = getQuery(event)
   const cursor = query.cursor as string | undefined
   const kvBatchLimit = useRuntimeConfig(event).public.kvBatchLimit as string

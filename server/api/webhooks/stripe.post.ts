@@ -1,8 +1,25 @@
 import type { SubscriptionPlan } from '#shared/schemas/saas'
 import { updateOrganizationPlan } from '../../saas/billing/service'
+import { verifyStripeWebhookSignature } from '../../saas/billing/stripe'
 
 export default eventHandler(async (event) => {
-  const body = await readBody(event)
+  const config = useRuntimeConfig(event)
+  const stripeWebhookSecret = config.stripeWebhookSecret as string | undefined
+  const signatureHeader = getHeader(event, 'stripe-signature')
+  const rawBody = await readRawBody(event, 'utf-8')
+
+  if (!rawBody) {
+    throw createError({ status: 400, statusText: 'Missing webhook body' })
+  }
+
+  if (stripeWebhookSecret) {
+    const isValid = await verifyStripeWebhookSignature(rawBody, signatureHeader, stripeWebhookSecret)
+    if (!isValid) {
+      throw createError({ status: 401, statusText: 'Invalid Stripe webhook signature' })
+    }
+  }
+
+  const body = JSON.parse(rawBody)
   const eventType = body?.type
 
   if (eventType === 'checkout.session.completed') {

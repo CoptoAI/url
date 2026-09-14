@@ -38,8 +38,16 @@ export default eventHandler(async (event) => {
     updatedAt: now,
   }
 
-  if (body.url !== undefined)
+  if (body.url !== undefined) {
+    const { isSafeWebhookUrl } = await import('../../../../saas/webhooks')
+    if (!isSafeWebhookUrl(body.url)) {
+      throw createError({
+        status: 400,
+        statusText: 'Webhook URL targets disallowed internal or private address',
+      })
+    }
     updates.url = body.url
+  }
   if (body.events !== undefined)
     updates.events = body.events
   if (body.description !== undefined)

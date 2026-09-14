@@ -268,4 +268,37 @@ describe('password protected redirect', { concurrent: false }, () => {
     expect(confirmedResponse.status).toBe(301)
     expect(confirmedResponse.headers.get('Location')).toBe(targetUrl)
   })
+
+  it('rejects link creation for reserved marketing and system slugs', async () => {
+    const reservedSlugs = ['pricing', 'features', 'dashboard', 'auth', 'tools', 'billing']
+    for (const slug of reservedSlugs) {
+      const res = await postJson('/api/link/create', {
+        url: 'https://example.com',
+        slug,
+      })
+      expect(res.status).toBe(400)
+    }
+  })
+
+  it('redirects root request on dashboard domain to /dashboard', async () => {
+    const res = await fetch('/', {
+      redirect: 'manual',
+      headers: {
+        Host: 'app.shaf.is',
+      },
+    })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('/dashboard')
+  })
+
+  it('redirects /dashboard/links on main domain to app.shaf.is', async () => {
+    const res = await fetch('/dashboard/links', {
+      redirect: 'manual',
+      headers: {
+        Host: 'shaf.is',
+      },
+    })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://app.shaf.is/dashboard/links')
+  })
 })

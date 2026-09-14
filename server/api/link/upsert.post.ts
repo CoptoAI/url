@@ -1,4 +1,5 @@
 import { CreateLinkSchema } from '#shared/schemas/link'
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
 
 defineRouteMeta({
   openAPI: {
@@ -34,6 +35,7 @@ defineRouteMeta({
 
 export default eventHandler(async (event) => {
   const link = await readValidatedBody(event, CreateLinkSchema.parse)
+  requireApiKeyPermission(event, 'links:write')
 
   await prepareIncomingLink(event, link)
 

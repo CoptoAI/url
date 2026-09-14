@@ -65,27 +65,25 @@ const form = useForm({
       <template #default="{ field }">
         <div class="space-y-1.5">
           <Label for="key-expires">Expiration</Label>
-          <select
-            id="key-expires"
-            class="
-              flex h-9 w-full rounded-md border border-input bg-transparent px-3
-              py-1 text-sm shadow-xs transition-colors
-              focus-visible:ring-1 focus-visible:ring-ring
-              focus-visible:outline-none
-            "
-            :value="field.state.value"
-            @change="(e: any) => field.handleChange(Number(e.target.value))"
+          <Select
+            :model-value="String(field.state.value)"
+            @update:model-value="(val: any) => field.handleChange(Number(val))"
           >
-            <option :value="30">
-              30 Days
-            </option>
-            <option :value="90">
-              90 Days
-            </option>
-            <option :value="365">
-              1 Year
-            </option>
-          </select>
+            <SelectTrigger id="key-expires" class="w-full">
+              <SelectValue placeholder="Select expiration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">
+                30 Days
+              </SelectItem>
+              <SelectItem value="90">
+                90 Days
+              </SelectItem>
+              <SelectItem value="365">
+                1 Year
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </template>
     </form.Field>

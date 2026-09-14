@@ -18,6 +18,7 @@ export const CreateOrganizationSchema = z.object({
 export const UpdateOrganizationSchema = z.object({
   name: z.string().trim().min(2).max(64).optional(),
   logo: z.string().trim().url().nullable().optional(),
+  allowedDomains: z.array(z.string().trim().toLowerCase()).optional(),
 })
 
 export const InviteMemberSchema = z.object({
@@ -33,14 +34,40 @@ export const CreateCustomDomainSchema = z.object({
   domain: z.string().trim().toLowerCase().regex(/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/, 'Invalid domain format'),
 })
 
+export const UpdateCustomDomainSchema = z.object({
+  rootRedirectUrl: z.preprocess(val => val === '' ? null : val, z.string().trim().url('Must be a valid URL').nullable().optional()),
+  notFoundRedirectUrl: z.preprocess(val => val === '' ? null : val, z.string().trim().url('Must be a valid URL').nullable().optional()),
+})
+
 export const CreateApiKeySchema = z.object({
   name: z.string().trim().min(2).max(64),
   permissions: z.array(z.string()).default(['links:read', 'links:write']),
   expiresInDays: z.number().int().min(1).max(365).optional(),
 })
 
+export const UsernameSchema = z.string()
+  .trim()
+  .min(3, 'Username must be at least 3 characters')
+  .max(32, 'Username must be at most 32 characters')
+  .regex(/^[a-z0-9_-]+$/, 'Username can only contain lowercase alphanumeric characters, underscores, and hyphens')
+
 export const UpdateProfileSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(64),
+  username: UsernameSchema.optional(),
+})
+
+export const OnboardingCompleteSchema = z.object({
+  username: UsernameSchema,
+  name: z.string().trim().min(2).max(64).optional(),
+  action: z.enum(['create_workspace', 'join_workspace']).default('create_workspace'),
+  workspaceName: z.string().trim().min(2).max(64).optional(),
+  workspaceSlug: z.string().trim().min(2).max(48).regex(/^[a-z0-9-]+$/).optional(),
+  teamSize: z.enum(['solo', 'small', 'medium', 'enterprise']).default('solo'),
+  invites: z.array(z.object({
+    email: z.string().trim().email().toLowerCase(),
+    role: OrganizationRoleSchema.default('member'),
+  })).max(20).optional(),
+  joinOrganizationId: z.string().optional(),
 })
 
 export const ChangePasswordSchema = z.object({

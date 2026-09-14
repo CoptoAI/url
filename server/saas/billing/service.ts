@@ -85,5 +85,17 @@ export async function updateOrganizationPlan(
     updatedAt: now,
   }).where(eq(organizations.id, orgId)).returning()
 
+  try {
+    const { dispatchWebhookEvent } = await import('../webhooks')
+    await dispatchWebhookEvent(event, {
+      organizationId: orgId,
+      eventName: 'billing.upgraded',
+      payload: { plan, status: 'active', updatedAt: now },
+    })
+  }
+  catch {
+    // Non-blocking
+  }
+
   return updated
 }

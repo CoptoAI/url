@@ -69,12 +69,30 @@ const requestUrl = useRequestURL()
 const host = requestUrl.host
 const origin = requestUrl.origin
 
+const { customDomains } = useSaaS()
+const matchedDomain = computed(() => {
+  if (!props.link.customDomainId)
+    return null
+  return (customDomains.value || []).find(d => d.id === props.link.customDomainId) || null
+})
+
+const effectiveHost = computed(() => matchedDomain.value?.domain || props.link.customDomain || host)
+
 function getLinkHost(url: string): string | undefined {
   const { host } = parseURL(url)
   return host
 }
 
-const shortLink = computed(() => `${origin}/${props.link.slug}`)
+const shortLink = computed(() => {
+  if (matchedDomain.value) {
+    return `https://${matchedDomain.value.domain}/${props.link.slug}`
+  }
+  if (props.link.customDomain) {
+    return `https://${props.link.customDomain}/${props.link.slug}`
+  }
+  return `${origin}/${props.link.slug}`
+})
+
 const linkIcon = computed(() => `https://unavatar.webp.se/${getLinkHost(props.link.url)}?fallback=https://sink.cool/icon.png`)
 const isExpired = computed(() => Boolean(props.link.expiration && props.link.expiration <= Math.floor(Date.now() / 1000)))
 const noteText = computed(() => props.link.comment?.trim() ?? '')
@@ -140,7 +158,7 @@ function copyLink() {
                           hidden
                           sm:inline
                         "
-                      >{{ host }}/{{ link.slug }}</span>
+                      >{{ effectiveHost }}/{{ link.slug }}</span>
                     </NuxtLink>
                   </TooltipTrigger>
                   <TooltipContent class="max-w-[90svw] break-all">
@@ -164,7 +182,7 @@ function copyLink() {
                     hidden
                     sm:inline
                   "
-                >{{ host }}/{{ link.slug }}</span>
+                >{{ effectiveHost }}/{{ link.slug }}</span>
               </NuxtLink>
               <span
                 v-if="link.unsafe"

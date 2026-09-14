@@ -9,18 +9,29 @@ import { LINK_PASSWORD_HASH_PREFIX, LINK_PASSWORD_MASK_PREFIX } from '../shared/
 export const db = drizzle(env.DB)
 
 export function fetchWithAuth(path: string, options?: RequestInit): Promise<Response> {
+  const headers = new Headers(options?.headers)
+  if (!headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${import.meta.env.NUXT_SITE_TOKEN}`)
+  }
+  if (!headers.has('x-sync-webhooks')) {
+    headers.set('x-sync-webhooks', 'true')
+  }
   const request = new Request(`http://localhost${path}`, {
     ...options,
-    headers: {
-      ...options?.headers,
-      Authorization: `Bearer ${import.meta.env.NUXT_SITE_TOKEN}`,
-    },
+    headers,
   })
   return exports.default.fetch(request)
 }
 
 export function fetch(path: string, options?: RequestInit): Promise<Response> {
-  return exports.default.fetch(new Request(`http://localhost${path}`, options))
+  const headers = new Headers(options?.headers)
+  if (!headers.has('x-sync-webhooks')) {
+    headers.set('x-sync-webhooks', 'true')
+  }
+  return exports.default.fetch(new Request(`http://localhost${path}`, {
+    ...options,
+    headers,
+  }))
 }
 
 export function postJson(path: string, body: unknown, withAuth = true): Promise<Response> {

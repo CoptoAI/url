@@ -49,6 +49,18 @@
       "skillPath": "skills/pnpm/SKILL.md",
       "computedHash": "2ec08c851c6f901d4ed72c21b826416ed074a487db65662b36249418afd728bf"
     },
+    "shadcn-vue": {
+      "source": "unovue/shadcn-vue",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn-vue/SKILL.md",
+      "computedHash": "7037ba3c62e72d5324dbe0bfebe21d4fb8cb7aba5a2200dce96a797e948dc368"
+    },
+    "sink": {
+      "source": "miantiao-me/sink",
+      "sourceType": "github",
+      "skillPath": "skills/sink/SKILL.md",
+      "computedHash": "cc03323c7a7317a8cbd1db46e1c998453d972a9ecff4ccfd5360ad9dc29e2587"
+    },
     "vite": {
       "source": "antfu/skills",
       "sourceType": "github",

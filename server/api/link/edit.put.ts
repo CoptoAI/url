@@ -1,5 +1,6 @@
 import type { Link } from '#shared/schemas/link'
 import { EditLinkSchema } from '#shared/schemas/link'
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
 
 defineRouteMeta({
   openAPI: {
@@ -37,6 +38,8 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  const link = await readValidatedBody(event, EditLinkSchema.parse)
+  requireApiKeyPermission(event, 'links:write')
   const { previewMode } = useRuntimeConfig(event).public
   if (previewMode) {
     throw createError({
@@ -44,8 +47,25 @@ export default eventHandler(async (event) => {
       statusText: 'Preview mode cannot edit links.',
     })
   }
-  const link = await readValidatedBody(event, EditLinkSchema.parse)
   link.slug = normalizeSlug(event, link.slug)
+
+  if (link.customDomainId) {
+    const { customDomains } = await import('../../database/schema')
+    const { getD1Database } = await import('../../services/link-store/d1')
+    const { and, eq } = await import('drizzle-orm')
+    const db = getD1Database(event)
+    const [domain] = await db.select().from(customDomains).where(
+      event.context.organizationId
+        ? and(eq(customDomains.id, link.customDomainId), eq(customDomains.organizationId, event.context.organizationId))
+        : eq(customDomains.id, link.customDomainId),
+    )
+    if (!domain || domain.status !== 'active') {
+      throw createError({
+        status: 400,
+        statusText: 'Custom domain is invalid or not active',
+      })
+    }
+  }
 
   const existingLink: Link | null = await getAnyAuthoritativeLink(event, link.slug)
   if (!existingLink) {
@@ -67,6 +87,32 @@ export default eventHandler(async (event) => {
       statusText: 'Link was modified or replaced',
     })
   }
+
+  const linkObj = newLink as Record<string, unknown>
+  const ctx = event.context as Record<string, unknown>
+  const orgId = (linkObj.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
+  if (orgId) {
+    try {
+      const { recordAuditLog } = await import('../../saas/audit')
+      const { dispatchWebhookEvent } = await import('../../saas/webhooks')
+      await recordAuditLog(event, {
+        organizationId: orgId,
+        action: 'link.updated',
+        resourceType: 'link',
+        resourceId: newLink.slug,
+        details: { url: newLink.url, title: newLink.title },
+      })
+      await dispatchWebhookEvent(event, {
+        organizationId: orgId,
+        eventName: 'link.updated',
+        payload: { slug: newLink.slug, url: newLink.url, title: newLink.title, comment: newLink.comment },
+      })
+    }
+    catch (err) {
+      console.error('EDIT WEBHOOK ERROR:', err)
+    }
+  }
+
   setResponseStatus(event, 201)
   return buildLinkResponse(event, newLink)
 })

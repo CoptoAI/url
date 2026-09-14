@@ -21,6 +21,14 @@ export default eventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, CreateWebhookSchema.parse)
+  const { isSafeWebhookUrl } = await import('../../../../saas/webhooks')
+  if (!isSafeWebhookUrl(body.url)) {
+    throw createError({
+      status: 400,
+      statusText: 'Webhook URL targets disallowed internal or private address',
+    })
+  }
+
   const db = getD1Database(event)
 
   const id = `wh_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`

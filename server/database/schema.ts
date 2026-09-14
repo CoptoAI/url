@@ -6,14 +6,31 @@ export const users = sqliteTable('users', {
   id: text().primaryKey(),
   email: text().notNull().unique(),
   name: text().notNull(),
+  username: text(),
   avatarUrl: text('avatar_url'),
   passwordHash: text('password_hash'),
+  googleId: text('google_id'),
   emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
+  onboardingCompleted: integer('onboarding_completed', { mode: 'boolean' }).notNull().default(false),
   role: text({ enum: ['user', 'admin'] }).notNull().default('user'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 }, table => [
   index('users_email_idx').on(table.email),
+  index('users_username_idx').on(table.username),
+  index('users_google_id_idx').on(table.googleId),
+])
+
+export const oauthAccounts = sqliteTable('oauth_accounts', {
+  id: text().primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text().notNull(),
+  providerAccountId: text('provider_account_id').notNull(),
+  profile: text({ mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: integer('created_at').notNull(),
+}, table => [
+  index('oauth_accounts_user_idx').on(table.userId),
+  index('oauth_accounts_provider_account_idx').on(table.provider, table.providerAccountId),
 ])
 
 export const organizations = sqliteTable('organizations', {
@@ -22,6 +39,7 @@ export const organizations = sqliteTable('organizations', {
   slug: text().notNull().unique(),
   logo: text(),
   plan: text({ enum: ['free', 'starter', 'pro', 'enterprise'] }).notNull().default('free'),
+  allowedDomains: text('allowed_domains', { mode: 'json' }).$type<string[]>(),
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionStatus: text('subscription_status').default('active'),
@@ -72,6 +90,8 @@ export const customDomains = sqliteTable('custom_domains', {
     txtRecordName?: string
     txtRecordValue?: string
   }>(),
+  rootRedirectUrl: text('root_redirect_url'),
+  notFoundRedirectUrl: text('not_found_redirect_url'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 }, table => [

@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { requireApiKeyPermission } from '../../saas/api-keys/service'
+
 defineRouteMeta({
   openAPI: {
     description: 'Count links matching keyword, URL, tag, and expiration status filters',
@@ -47,6 +49,7 @@ const CountQuerySchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  requireApiKeyPermission(event, 'links:read')
   const query = await getValidatedQuery(event, CountQuerySchema.parse)
   return { count: await countLinks(event, query) }
 })

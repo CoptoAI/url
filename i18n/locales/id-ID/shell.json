@@ -29,7 +29,14 @@
     "analysis": "Analisis",
     "realtime": "Real-time",
     "check": "Check",
-    "migrate": "Impor/Ekspor"
+    "migrate": "Impor/Ekspor",
+    "profile": "Profil Akun",
+    "team": "Anggota Tim",
+    "domains": "Domain Kustom",
+    "api_keys": "Kunci API",
+    "webhooks": "Webhook",
+    "audit_logs": "Log Audit",
+    "billing": "Tagihan & Paket"
   },
   "sidebar": {
     "subtitle": "Pemendek Tautan",

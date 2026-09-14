@@ -53,6 +53,7 @@
     "form": {
       "url": "連結地址",
       "slug": "短連結",
+      "domain": "網域",
       "comment": "備註",
       "tags": "標籤",
       "tags_description": "最多 10 個標籤，每項不超過 32 個字元。",
