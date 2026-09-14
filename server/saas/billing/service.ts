@@ -41,23 +41,29 @@ export async function assertOrganizationQuota(event: H3Event, orgId: string, res
   const quota = await checkOrganizationQuota(event, orgId)
 
   if (resource === 'links' && quota.usage.links >= quota.limits.linksQuota) {
+    const msg = `Link creation quota reached (${quota.limits.linksQuota}). Upgrade your plan to create more links.`
     throw createError({
       status: 403,
-      statusText: `Link creation quota reached (${quota.limits.linksQuota}). Upgrade your plan to create more links.`,
+      statusMessage: msg,
+      message: msg,
     })
   }
 
   if (resource === 'domains' && quota.usage.domains >= quota.limits.customDomainsQuota) {
+    const msg = `Custom domain quota reached (${quota.limits.customDomainsQuota}). Upgrade your plan to add more domains.`
     throw createError({
       status: 403,
-      statusText: `Custom domain quota reached (${quota.limits.customDomainsQuota}). Upgrade your plan to add more domains.`,
+      statusMessage: msg,
+      message: msg,
     })
   }
 
   if (resource === 'members' && quota.usage.members >= quota.limits.teamSeatsQuota) {
+    const msg = `Team seat quota reached (${quota.limits.teamSeatsQuota}). Upgrade your plan to invite more members.`
     throw createError({
       status: 403,
-      statusText: `Team seat quota reached (${quota.limits.teamSeatsQuota}). Upgrade your plan to invite more members.`,
+      statusMessage: msg,
+      message: msg,
     })
   }
 }

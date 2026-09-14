@@ -79,8 +79,8 @@ export const PlanLimits = {
   free: {
     linksQuota: 100,
     clicksQuotaMonthly: 10000,
-    customDomainsQuota: 0,
-    teamSeatsQuota: 1,
+    customDomainsQuota: 2,
+    teamSeatsQuota: 2,
     analyticsRetentionDays: 30,
     priceMonthly: 0,
   },

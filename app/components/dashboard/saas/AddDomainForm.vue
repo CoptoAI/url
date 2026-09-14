@@ -25,7 +25,7 @@ const form = useForm({
       emit('success')
     }
     catch (err: any) {
-      toast.error(err.data?.message || err.statusText || 'Failed to add custom domain')
+      toast.error(err.data?.message || err.data?.statusMessage || err.statusText || 'Failed to add custom domain')
     }
   },
 })

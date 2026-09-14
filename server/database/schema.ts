@@ -45,8 +45,8 @@ export const organizations = sqliteTable('organizations', {
   subscriptionStatus: text('subscription_status').default('active'),
   linksQuota: integer('links_quota').notNull().default(100),
   clicksQuotaMonthly: integer('clicks_quota_monthly').notNull().default(10000),
-  customDomainsQuota: integer('custom_domains_quota').notNull().default(0),
-  teamSeatsQuota: integer('team_seats_quota').notNull().default(1),
+  customDomainsQuota: integer('custom_domains_quota').notNull().default(2),
+  teamSeatsQuota: integer('team_seats_quota').notNull().default(2),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 }, table => [

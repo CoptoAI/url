@@ -50,13 +50,18 @@ async function callCloudflareCustomHostnames(event: H3Event, action: 'create' | 
       headers,
       body: JSON.stringify({
         hostname: domain,
-        ssl: { method: 'http', type: 'dv' },
+        ssl: { method: 'txt', type: 'dv' },
       }),
     })
     const data = await res.json() as { success: boolean, result: any, errors?: any[] }
     if (!data.success) {
+      const errMsg = data.errors?.[0]?.message || 'Cloudflare rejected custom hostname registration'
       console.error('Cloudflare Custom Hostnames create error:', JSON.stringify(data.errors || data))
-      return null
+      throw createError({
+        status: 400,
+        statusMessage: errMsg,
+        message: errMsg,
+      })
     }
     return {
       id: data.result.id,
@@ -118,13 +123,36 @@ export async function addCustomDomain(event: H3Event, orgId: string, domain: str
 
   const existing = await db.select().from(customDomains).where(eq(customDomains.organizationId, orgId))
   if (existing.length >= org.customDomainsQuota) {
+    const msg = `Custom domain quota reached (${org.customDomainsQuota}). Please upgrade your plan to add more domains.`
     throw createError({
       status: 403,
-      statusText: `Custom domain quota reached (${org.customDomainsQuota}). Please upgrade your plan to add more domains.`,
+      statusMessage: msg,
+      message: msg,
     })
   }
 
   const normalizedDomain = domain.toLowerCase().trim()
+
+  // Disallow core system domains
+  const systemDomains = ['shaf.app', 'dash.shaf.app', 'shaf.is', 'cname.shaf.app', 'cname.shaf.is']
+  if (systemDomains.includes(normalizedDomain)) {
+    throw createError({
+      status: 400,
+      statusMessage: 'This domain is a core system domain and cannot be added as a custom vanity domain.',
+      message: 'This domain is a core system domain and cannot be added as a custom vanity domain.',
+    })
+  }
+
+  // Check for duplicate custom domain in database
+  const [alreadyExists] = await db.select().from(customDomains).where(eq(customDomains.domain, normalizedDomain))
+  if (alreadyExists) {
+    throw createError({
+      status: 409,
+      statusMessage: 'This custom domain is already registered.',
+      message: 'This custom domain is already registered.',
+    })
+  }
+
   const cfResult = await callCloudflareCustomHostnames(event, 'create', normalizedDomain)
   const now = Math.floor(Date.now() / 1000)
   const domainId = `dom_${nanoid()}`
