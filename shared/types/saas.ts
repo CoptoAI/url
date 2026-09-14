@@ -51,6 +51,7 @@ export interface OrganizationInvite {
   token: string
   expiresAt: number
   createdAt: number
+  inviterName?: string
 }
 
 export interface CustomDomain {

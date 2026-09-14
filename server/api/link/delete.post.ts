@@ -41,9 +41,27 @@ export default eventHandler(async (event) => {
   const slug = normalizeSlug(event, body.slug)
 
   const existingLink = await getAnyAuthoritativeLink(event, slug)
-  const linkObj = existingLink as Record<string, unknown> | null
-  const ctx = event.context as Record<string, unknown>
-  const orgId = (linkObj?.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
+  if (!existingLink) {
+    throw createError({
+      status: 404,
+      statusText: 'Link not found',
+    })
+  }
+
+  const linkObj = existingLink as Record<string, unknown>
+  const callerOrgId = event.context.organizationId
+  const linkOrgId = linkObj.organizationId as string | undefined
+
+  if (event.context.authMethod === 'session-jwt' || event.context.authMethod === 'api-key') {
+    if (!callerOrgId || linkOrgId !== callerOrgId) {
+      throw createError({
+        status: 403,
+        statusText: 'Forbidden: Link belongs to another organization',
+      })
+    }
+  }
+
+  const orgId = linkOrgId || callerOrgId
 
   await deleteLink(event, slug)
 

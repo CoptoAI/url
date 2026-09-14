@@ -18,6 +18,9 @@ export default eventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, InviteMemberSchema.parse)
+  const { assertOrganizationQuota } = await import('../../../saas/billing/service')
+  await assertOrganizationQuota(event, orgId, 'members')
+
   const invite = await inviteMember(event, orgId, userId, body.email, body.role)
 
   return invite

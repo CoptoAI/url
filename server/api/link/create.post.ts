@@ -88,6 +88,15 @@ export default eventHandler(async (event) => {
 
   await hashLinkPasswordForCreate(link)
 
+  const linkObj = link as Record<string, unknown>
+  const ctx = event.context as Record<string, unknown>
+  const orgId = (linkObj.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
+
+  if (orgId) {
+    const { assertOrganizationQuota } = await import('../../saas/billing/service')
+    await assertOrganizationQuota(event, orgId, 'links')
+  }
+
   if (!await createLink(event, link)) {
     throw createError({
       status: 409,
@@ -95,9 +104,6 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const linkObj = link as Record<string, unknown>
-  const ctx = event.context as Record<string, unknown>
-  const orgId = (linkObj.organizationId as string | undefined) || (ctx.organizationId as string | undefined)
   if (orgId) {
     const { recordAuditLog } = await import('../../saas/audit')
     const { dispatchWebhookEvent } = await import('../../saas/webhooks')

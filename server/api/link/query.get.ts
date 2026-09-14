@@ -29,6 +29,19 @@ export default eventHandler(async (event) => {
 
   const { link, metadata } = await getLinkWithMetadata(event, slug)
   if (link) {
+    const linkObj = link as Record<string, unknown>
+    const callerOrgId = event.context.organizationId
+    const linkOrgId = linkObj.organizationId as string | undefined
+
+    if (event.context.authMethod === 'session-jwt' || event.context.authMethod === 'api-key') {
+      if (!callerOrgId || linkOrgId !== callerOrgId) {
+        throw createError({
+          status: 404,
+          statusText: 'Not Found',
+        })
+      }
+    }
+
     return sanitizeLinkPassword({
       ...metadata,
       ...link,

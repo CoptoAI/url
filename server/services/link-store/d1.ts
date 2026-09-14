@@ -69,7 +69,14 @@ function getDatabase(event: H3Event) {
 
 function orgCondition(event: H3Event) {
   const orgId = event.context.organizationId
-  return orgId ? eq(links.organizationId, orgId) : undefined
+  if (orgId) {
+    return eq(links.organizationId, orgId)
+  }
+  // Fail-closed for multi-tenant sessions and API keys without an assigned organization
+  if (event.context.authMethod === 'session-jwt' || event.context.authMethod === 'api-key') {
+    return eq(links.organizationId, '__unassigned__')
+  }
+  return undefined
 }
 
 function activeCondition(now = Math.floor(Date.now() / 1000)) {

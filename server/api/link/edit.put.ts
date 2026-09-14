@@ -90,6 +90,19 @@ export default eventHandler(async (event) => {
     })
   }
 
+  const existingLinkObj = existingLink as Record<string, unknown>
+  const callerOrgId = event.context.organizationId
+  const linkOrgId = existingLinkObj.organizationId as string | undefined
+
+  if (event.context.authMethod === 'session-jwt' || event.context.authMethod === 'api-key') {
+    if (!callerOrgId || linkOrgId !== callerOrgId) {
+      throw createError({
+        status: 403,
+        statusText: 'Forbidden: Link belongs to another organization',
+      })
+    }
+  }
+
   if (link.url !== existingLink.url)
     await detectUnsafeLink(event, link)
 

@@ -41,14 +41,27 @@ function handleSelect(org: Organization) {
               <Building2 class="size-4" />
             </div>
             <div class="grid min-w-0 flex-1 text-left text-sm/tight">
-              <span class="truncate font-medium">{{ activeOrganization?.name || 'My Workspace' }}</span>
-              <span class="truncate text-xs text-muted-foreground capitalize">{{ activeOrganization?.plan || 'Free' }} Plan</span>
+              <div class="flex min-w-0 items-center gap-1.5">
+                <span class="truncate font-semibold">{{ activeOrganization?.name || 'My Workspace' }}</span>
+                <Badge
+                  variant="secondary"
+                  class="
+                    h-4 shrink-0 px-1 text-[9px] font-semibold tracking-wider
+                    uppercase
+                  "
+                >
+                  {{ activeOrganization?.plan || 'Free' }}
+                </Badge>
+              </div>
+              <span class="truncate text-xs text-muted-foreground capitalize">
+                {{ activeOrganization?.role ? `${activeOrganization.role} access` : 'Personal' }}
+              </span>
             </div>
             <ChevronsUpDown aria-hidden="true" class="ml-auto size-4" />
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          class="w-[--reka-dropdown-menu-trigger-width] min-w-56"
+          class="w-[--reka-dropdown-menu-trigger-width] min-w-60"
           :side="isMobile ? 'bottom' : 'right'"
           align="start"
           :side-offset="4"
@@ -59,28 +72,41 @@ function handleSelect(org: Organization) {
           <DropdownMenuItem
             v-for="org in organizations"
             :key="org.id"
-            class="flex items-center justify-between gap-2 p-2"
+            class="flex cursor-pointer items-center justify-between gap-2 p-2"
             @select.prevent="handleSelect(org)"
           >
-            <div class="flex items-center gap-2">
+            <div class="flex min-w-0 items-center gap-2.5">
               <div
                 class="
-                  flex size-6 items-center justify-center rounded-sm border
-                  bg-background
+                  flex size-7 shrink-0 items-center justify-center rounded-md
+                  border bg-background text-foreground shadow-xs
                 "
               >
                 <Building2 class="size-3.5" />
               </div>
-              <div class="flex flex-col text-left">
-                <span class="leading-none font-medium">{{ org.name }}</span>
+              <div class="flex min-w-0 flex-col text-left">
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <span class="truncate text-sm/tight font-medium">{{ org.name }}</span>
+                  <Badge
+                    variant="outline"
+                    class="h-3.5 shrink-0 px-1 text-[8px] font-medium uppercase"
+                  >
+                    {{ org.plan || 'Free' }}
+                  </Badge>
+                </div>
                 <span
-                  v-if="org.role" class="
-                    mt-0.5 text-[10px] text-muted-foreground capitalize
-                  "
-                >{{ org.role }}</span>
+                  v-if="org.role"
+                  class="mt-0.5 text-[10px] text-muted-foreground capitalize"
+                >
+                  {{ org.role }}
+                </span>
               </div>
             </div>
-            <Check v-if="activeOrganization?.id === org.id" class="size-4" />
+            <Check
+              v-if="activeOrganization?.id === org.id" class="
+                size-4 shrink-0 text-primary
+              "
+            />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -19,5 +19,8 @@ export default eventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, CreateCustomDomainSchema.parse)
+  const { assertOrganizationQuota } = await import('../../../../saas/billing/service')
+  await assertOrganizationQuota(event, orgId, 'domains')
+
   return await addCustomDomain(event, orgId, body.domain)
 })
