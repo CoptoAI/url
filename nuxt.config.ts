@@ -58,6 +58,9 @@ export default defineNuxtConfig({
     safeBrowsingDoh: '', // Set to DoH URL to enable auto-detection, e.g. https://family.cloudflare-dns.com/dns-query
     webhookUrl: '',
     webhookSecret: '',
+    resendApiKey: process.env.NUXT_RESEND_API_KEY || '',
+    resendFromEmail: process.env.NUXT_RESEND_FROM_EMAIL || 'Shaf <notifications@shaf.app>',
+    resendWebhookSecret: process.env.NUXT_RESEND_WEBHOOK_SECRET || '',
     public: {
       mainDomain: process.env.NUXT_MAIN_DOMAIN || 'shaf.app',
       dashboardDomain: process.env.NUXT_DASHBOARD_DOMAIN || 'dash.shaf.app',
@@ -70,6 +73,8 @@ export default defineNuxtConfig({
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',
+      googleAnalyticsId: process.env.NUXT_PUBLIC_GA_ID || 'G-V6G26CTGVG',
+      microsoftClarityId: process.env.NUXT_PUBLIC_CLARITY_ID || 'yiqwixpsph',
     },
   },
   routeRules: {

@@ -120,6 +120,26 @@ export async function inviteMember(event: H3Event, orgId: string, invitedByUserI
   }).returning()
 
   try {
+    const [org] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, orgId))
+    const [inviter] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, invitedByUserId))
+
+    const { sendWorkspaceInviteEmail } = await import('../email')
+    await sendWorkspaceInviteEmail(event, {
+      inviteId: invite.id,
+      toEmail: email.toLowerCase(),
+      inviterName: inviter?.name || inviter?.email || 'A team member',
+      inviterEmail: inviter?.email || '',
+      organizationName: org?.name || 'Workspace',
+      role,
+      inviteToken: token,
+      expiresAt,
+    })
+  }
+  catch (err) {
+    console.error('[Organizations] Failed to send invite email:', err)
+  }
+
+  try {
     const { dispatchWebhookEvent } = await import('../webhooks')
     await dispatchWebhookEvent(event, {
       organizationId: orgId,

@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "agent-email-inbox": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-email-inbox/SKILL.md",
+      "computedHash": "e33f2863d24a5a4b96d8bc548a26f757c893b70db97034349973b381f6ed670d"
+    },
     "antfu": {
       "source": "antfu/skills",
       "sourceType": "github",
@@ -25,6 +31,12 @@
       "skillPath": "skills/code-simplifier/SKILL.md",
       "computedHash": "ff9cb10181e31daf1f1644754c491601a7849dff4b4536a1d0ec4f97f680348e"
     },
+    "email-best-practices": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/email-best-practices/SKILL.md",
+      "computedHash": "cf53e0d7ad72c440818c64a104ab220f527f26f10c7d8163fa99e066bf747eed"
+    },
     "make-interfaces-feel-better": {
       "source": "jakubkrehel/make-interfaces-feel-better",
       "sourceType": "github",
@@ -48,6 +60,24 @@
       "sourceType": "github",
       "skillPath": "skills/pnpm/SKILL.md",
       "computedHash": "2ec08c851c6f901d4ed72c21b826416ed074a487db65662b36249418afd728bf"
+    },
+    "react-email": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-email/SKILL.md",
+      "computedHash": "1d2afbc631670c6bc23e90d0d4776d25f08eabed4bac72485bf06aea1f91ae89"
+    },
+    "resend": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/resend/SKILL.md",
+      "computedHash": "0bb801d4a4909fe9c67073509a8201c487d85a5b5c422151ebf4d436b64f3a3c"
+    },
+    "resend-cli": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/resend-cli/SKILL.md",
+      "computedHash": "4cbde216cd608deae4140e233a485f45a2fe56a873910b6a2c0bd3b26fc135e5"
     },
     "shadcn-vue": {
       "source": "unovue/shadcn-vue",

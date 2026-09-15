@@ -114,5 +114,8 @@
     "*.{js,jsx,ts,tsx,vue}": [
       "eslint --fix"
     ]
+  },
+  "dependencies": {
+    "resend": "^6.28.0"
   }
 }
