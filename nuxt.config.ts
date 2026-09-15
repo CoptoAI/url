@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { resolve } from 'node:path'
 import process from 'node:process'
 import tailwindcss from '@tailwindcss/vite'
 import { currentLocales } from './i18n/i18n'
@@ -110,6 +111,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-07-13',
   nitro: {
     preset: import.meta.env.CF_PAGES !== '1' ? 'cloudflare-module' : undefined,
+    alias: {
+      '@react-email/render': resolve('./server/mock-react-email.ts'),
+    },
     experimental: {
       openAPI: true,
     },
